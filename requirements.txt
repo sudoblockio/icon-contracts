@@ -1,0 +1,15 @@
+nanoid==2.0.0
+requests==2.26.0
+loguru==0.5.3
+prometheus_client==0.11.0
+
+grpcio==1.40.0
+protobuf
+confluent_kafka
+
+alembic==1.7.1
+asyncpg==0.24.0
+fastapi==0.68.1
+sqlmodel==0.0.4
+uvicorn==0.15.0
+

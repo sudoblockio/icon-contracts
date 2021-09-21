@@ -1,0 +1,18 @@
+email: str
+website: str
+general_name: str
+p_rep_address: str
+organization_city: str
+organization_country: str
+license: Enum
+social_media:
+  facebook: str
+  telegram: str
+  reddit: str
+  discord: str
+  steemit: str
+  twitter: str
+  youtube: str
+  github: str
+  keybase: str
+  wechat: str
