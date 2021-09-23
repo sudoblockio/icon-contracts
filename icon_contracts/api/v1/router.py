@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from icon_contracts.api.v1.endpoints import preps
+from icon_contracts.api.v1.endpoints import contracts
 
 api_router = APIRouter()
-api_router.include_router(preps.router)
+api_router.include_router(contracts.router)

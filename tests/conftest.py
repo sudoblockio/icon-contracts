@@ -8,11 +8,16 @@ import pytest
 from fastapi.testclient import TestClient
 from icon_contracts.db import get_session
 from icon_contracts.main_api import app
+from icon_contracts.db import session
 
 
 # @pytest.fixture(scope="session")
 # def db() -> Generator:
 #     yield get_session()
+
+@pytest.fixture(scope="session")
+def db():
+    yield session
 
 
 @pytest.fixture(scope="module")

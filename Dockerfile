@@ -11,7 +11,7 @@ ENV PYTHONPATH="/opt:${PYTHONPATH}"
 WORKDIR /opt
 
 RUN apt-get update \
-  && apt-get -y install gcc netcat net-tools \
+  && apt-get -y install gcc xxd unzip netcat net-tools \
   && apt-get clean
 
 RUN pip install --upgrade pip

@@ -19,3 +19,12 @@ async def get_contracts(
     result = await session.execute(select(Contract))
     contracts = result.scalars().all()
     return contracts
+
+
+@router.get("/contracts")
+async def get_contracts(
+        session: AsyncSession = Depends(get_session)) -> List[Contract]:
+    """Return list of contracts"""
+    result = await session.execute(select(Contract))
+    contracts = result.scalars().all()
+    return contracts

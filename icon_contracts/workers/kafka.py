@@ -1,7 +1,8 @@
 from time import sleep
 from typing import Any
 
-from confluent_kafka import DeserializingConsumer, KafkaError
+from confluent_kafka import DeserializingConsumer, KafkaError, Producer
+from confluent_kafka.admin import AdminClient
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.protobuf import ProtobufDeserializer
 from confluent_kafka.serialization import StringDeserializer
@@ -13,11 +14,14 @@ from loguru import logger
 from icon_contracts.config import settings
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 
-class KafkaClient(BaseModel):
+
+class Worker(BaseModel):
     name: str = None
     schema_registry_url: str = settings.SCHEMA_REGISTRY_URL
     schema_registry_client: Any = None
     sleep_seconds: float = 0.25
+
+    session: Any = None
 
     kafka_server: str = settings.KAFKA_BROKER_URL
     consumer_group: str
@@ -25,6 +29,7 @@ class KafkaClient(BaseModel):
     topic: str
 
     consumer: Any = None
+    producer: Any = None
     consumer_schema: Any = None
     consumer_deserializer: Any = None
 
@@ -32,19 +37,6 @@ class KafkaClient(BaseModel):
         super().__init__(**data)
         if self.name is None:
             self.name = self.topic
-
-        # self.schema_registry_client = SchemaRegistryClient(
-        #     {"url": self.schema_registry_url}
-        # )
-
-        # subjects = self.schema_registry_client.get_subjects()
-        # for s in subjects:
-        #     if s.split("-value")[0] == self.topic:
-        #         self.consumer_schema = self.schema_registry_client.get_latest_version(s)
-        #
-        # self.consumer_deserializer = ProtobufDeserializer(
-        #     self.consumer_schema.schema.schema_str,
-        # )
 
         self.consumer_deserializer = ProtobufDeserializer(TransactionRaw)
 
@@ -57,7 +49,9 @@ class KafkaClient(BaseModel):
                 "auto.offset.reset": "earliest",
             }
         )
-        from confluent_kafka.admin import AdminClient
+
+        # Producer
+        self.producer = Producer({'bootstrap.servers': self.kafka_server})
 
         admin_client = AdminClient({'bootstrap.servers': self.kafka_server})
         topics = admin_client.list_topics().topics
@@ -66,6 +60,9 @@ class KafkaClient(BaseModel):
             raise RuntimeError()
 
         self.init()
+
+    def produce(self, topic, key, value, header):
+        self.producer.produce(topic=topic, value=value, key=key, header=header)
 
     def start(self):
         self.consumer.subscribe([self.topic])
@@ -96,9 +93,8 @@ class KafkaClient(BaseModel):
                 sleep(1)
                 continue
             else:
-                # Messages are keyed by to_address
-                if msg.key() == settings.GOVERNANCE_ADDRESS:
-                    self.process(msg.value())
+                self.process(msg)
+
 
     def init(self):
         """Overridable process that runs on init."""

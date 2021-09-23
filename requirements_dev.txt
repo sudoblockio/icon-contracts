@@ -2,6 +2,4 @@ pytest
 pytest-mock
 pytest-docker-compose
 
-docker-compose
-
 grpcio-tools==1.40.0
