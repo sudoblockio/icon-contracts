@@ -16,32 +16,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Start DB
+      - name: Tag name
+        id: source
+        run: |
+          echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+
+      - name: Bring up DBs
         run: docker-compose -f docker-compose.db.yml up -d
 
-      - name: Install requirements
-        run: pip3 install -r requirements.txt -r requirements_dev.txt
+      - name: Run unit tests
+        run: cd src && go test ./... -v
 
-      - name: Add workspace to path
-        run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+      - name: Bring up stack
+        run: make up
 
-      - name: Init DB
-        run: |
-          cd icon_contracts
-          alembic upgrade head
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: changethis
-          POSTGRES_DATABASE: app
-          POSTGRES_SERVER: localhost
-
-      - name: Run tests
-        run: python3 -m pytest
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: changethis
-          POSTGRES_DATABASE: app
-          POSTGRES_SERVER: localhost
+      - name: Run integration tests
+        run: cd tests && go test ./... -v
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -59,23 +49,111 @@ jobs:
         run: |
           echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Worker - Build, tag, and push image to Amazon ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
-          ECR_REPOSITORY: icon-contracts
+          ECR_REGISTRY: ${{ steps.login-ecr-worker.outputs.registry }}
+          ECR_REPOSITORY: icon-contracts-worker
           IMAGE_TAG: ${{ steps.source.outputs.TAG }}
         run: |
-          docker build --build-arg SERVICE_NAME=api -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --target prod --build-arg SERVICE_NAME=worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Update prod-mainnet deployment values file and re-commit
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_API }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_API }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr-api
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: API - Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
+          ECR_REPOSITORY: icon-contracts-api
+          IMAGE_TAG: ${{ steps.source.outputs.TAG }}
+        run: |
+          docker build --target prod --build-arg SERVICE_NAME=api -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args:
+            - SERVICE_NAME=api
+          file: ./Dockerfile
+          target: prod
+          push: true
+          tags: |
+            geometrylabs/icon-contracts-api:latest
+            geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args:
+            - SERVICE_NAME=worker
+          file: ./Dockerfile
+          target: prod
+          push: true
+          tags: |
+            geometrylabs/icon-contracts-worker:latest
+            geometrylabs/icon-contracts-worker:${{ steps.source.outputs.TAG }}
+
+      - name: Update dev-mainnet deployment values file (API) and re-commit
         uses: fjogeleit/yaml-update-action@master
         with:
           valueFile: 'chart/deployments/dev-mainnet/values.dev.yaml'
-          propertyPath: 'deployment.image.tag'
+          propertyPath: 'api.image.tag'
           value: ${{ github.run_number }}
           branch: deployment
           targetBranch: main
           createPR: 'false'
-          message: 'Update prod deployment image version to ${{ github.run_number }}'
+          message: 'Update prod deployment (API) image version to ${{ github.run_number }}'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update dev-mainnet deployment values file (WORKER) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          valueFile: 'chart/deployments/dev-mainnet/values.dev.yaml'
+          propertyPath: 'worker.image.tag'
+          value: ${{ github.run_number }}
+          branch: deployment
+          targetBranch: main
+          createPR: 'false'
+          message: 'Update prod deployment (WORKER) image version to ${{ github.run_number }}'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update dev-mainnet deployment values file (API) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
+          propertyPath: 'api.image.tag'
+          value: ${{ github.run_number }}
+          branch: deployment
+          targetBranch: main
+          createPR: 'false'
+          message: 'Update prod deployment (API) image version to ${{ github.run_number }}'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update dev-mainnet deployment values file (WORKER) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
+          propertyPath: 'worker.image.tag'
+          value: ${{ github.run_number }}
+          branch: deployment
+          targetBranch: main
+          createPR: 'false'
+          message: 'Update prod deployment (WORKER) image version to ${{ github.run_number }}'
           token: ${{ secrets.GITHUB_TOKEN }}
