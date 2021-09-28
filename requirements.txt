@@ -1,4 +1,6 @@
-tbears
+
+iconservice
+
 
 nanoid==2.0.0
 requests==2.26.0
@@ -14,4 +16,3 @@ asyncpg==0.24.0
 fastapi==0.68.1
 sqlmodel==0.0.4
 uvicorn==0.15.0
-

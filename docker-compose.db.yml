@@ -5,10 +5,9 @@ services:
     image: geometrylabs/iconetl:${ICON_ETL_TAG:-latest}
     command: [
       "stream",
-       "-s", "${START_BLOCK:-2387412}",
+       "-s", "${START_BLOCK:-488012}",
       "-o", "kafka:9092",
       "--period-seconds", "1",
-      #"--values-as-hex", "True",
       "--provider-uri", "http://34.218.244.40:9000/api/v3",
       "-b", "100",
       "-B", "100",
@@ -18,8 +17,6 @@ services:
     restart: on-failure
     depends_on:
       - kafka
-#    volumes:
-#      - "./volumes/etl/last_synced_block.txt:/icon-etl/last_synced_block.txt"
 
   ############
   # Database #

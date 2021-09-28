@@ -1,5 +1,6 @@
 import pytest
-from icon_contracts.workers.logs import
+
+from icon_contracts.workers.transactions import transactions_worker
 
 
 @pytest.fixture()
@@ -10,5 +11,5 @@ def contract_creation_docker(docker_up_block, docker_project_down):
     # docker_project_down(project)
 
 
-def test_contract_creation_python(db):
-    logs_worker(session=db)
+# def test_contract_creation_python(db):
+#     transactions_worker(session=db)

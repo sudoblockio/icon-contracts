@@ -6,10 +6,9 @@ from confluent_kafka.admin import AdminClient
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.protobuf import ProtobufDeserializer
 from confluent_kafka.serialization import StringDeserializer
-
+from loguru import logger
 from pydantic import BaseModel, validator
 
-from loguru import logger
 # from icon_contracts.log import logger
 from icon_contracts.config import settings
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
@@ -51,9 +50,9 @@ class Worker(BaseModel):
         )
 
         # Producer
-        self.producer = Producer({'bootstrap.servers': self.kafka_server})
+        self.producer = Producer({"bootstrap.servers": self.kafka_server})
 
-        admin_client = AdminClient({'bootstrap.servers': self.kafka_server})
+        admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
         topics = admin_client.list_topics().topics
 
         if self.topic not in topics:
@@ -61,8 +60,14 @@ class Worker(BaseModel):
 
         self.init()
 
-    def produce(self, topic, key, value, header):
-        self.producer.produce(topic=topic, value=value, key=key, header=header)
+    def produce(self, topic, key, value):
+        try:
+            # https://github.com/confluentinc/confluent-kafka-python/issues/137#issuecomment-282427382
+            self.producer.produce(topic=topic, value=value, key=key)
+            self.producer.poll(0)
+        except BufferError as e:
+            self.producer.poll(1)
+            self.producer.produce(topic=topic, value=value, key=key)
 
     def start(self):
         self.consumer.subscribe([self.topic])
@@ -78,16 +83,16 @@ class Worker(BaseModel):
 
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:
-                    err_msg = (
-                        "{topic} {partition} reached end at offset {offset}".format(
-                            topic=msg.topic(),
-                            partition=msg.partition(),
-                            offset=msg.offset(),
-                        )
+                    err_msg = "{topic} {partition} reached end at offset {offset}".format(
+                        topic=msg.topic(),
+                        partition=msg.partition(),
+                        offset=msg.offset(),
                     )
                     logger.error("Kafka consumer: " + err_msg)
                 if msg.error().code() == KafkaError.UNKNOWN_TOPIC_OR_PART:
-                    logger.error(f"Kafka consumer: Kafka topic {msg.topic()} not ready. Restarting.")
+                    logger.error(
+                        f"Kafka consumer: Kafka topic {msg.topic()} not ready. Restarting."
+                    )
                 elif msg.error():
                     logger.error("Kafka consumer: " + str(msg.error()))
                 sleep(1)
@@ -95,6 +100,8 @@ class Worker(BaseModel):
             else:
                 self.process(msg)
 
+        # Flush the last of the messages
+        self.producer.flush()
 
     def init(self):
         """Overridable process that runs on init."""

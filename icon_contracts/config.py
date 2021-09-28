@@ -3,7 +3,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
 
-    NAME: str = "contracts"
+    name: str = "contracts"
     NETWORK_NAME: str = "mainnet"
 
     # Ports
@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     LOG_FILE_NAME: str = "contracts.log"
     LOG_FORMAT: str = "string"
 
+    # ICON Nodes
+    icon_node_url = "http://34.218.244.40:9000/api/v3"
+    # icon_node_url = "https://icon.geometry-dev.net/api/v3"
+
     # Kafka
     KAFKA_BROKER_URL: str = "localhost:29092"
     SCHEMA_REGISTRY_URL: str = "http://localhost:8081"
@@ -45,28 +49,28 @@ class Settings(BaseSettings):
     CONSUMER_TOPIC_LOGS: str = "logs"
 
     # DB
-    POSTGRES_USER: str = 'postgres'
-    POSTGRES_PASSWORD: str = 'changeme'
-    POSTGRES_SERVER: str = '127.0.0.1'
-    POSTGRES_PORT: str = '5432'
-    POSTGRES_DATABASE: str = 'postgres'
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "changeme"
+    POSTGRES_SERVER: str = "127.0.0.1"
+    POSTGRES_PORT: str = "5432"
+    POSTGRES_DATABASE: str = "postgres"
 
     # Endpoints
     MAX_PAGE_SIZE: int = 100
 
-    # Redis
-    REDIS_HOST: str = "redis"
-    REDIS_PORT: int = 6379
-    REDIS_PASSWORD: str = ""
-    REDIS_CHANNEL: str = "contracts"
-    REDIS_SENTINEL_CLIENT_MODE: bool = False
-    REDIS_SENTINEL_CLIENT_MASTER_NAME: str = "master"
+    # # Redis
+    # REDIS_HOST: str = "redis"
+    # REDIS_PORT: int = 6379
+    # REDIS_PASSWORD: str = ""
+    # REDIS_CHANNEL: str = "contracts"
+    # REDIS_SENTINEL_CLIENT_MODE: bool = False
+    # REDIS_SENTINEL_CLIENT_MASTER_NAME: str = "master"
 
-    GOVERNANCE_ADDRESS: str = "cx0000000000000000000000000000000000000000"
+    governance_address: str = "cx0000000000000000000000000000000000000000"
+    one_address: str = "cx0000000000000000000000000000000000000001"
 
     class Config:
-        case_sensitive = True
-        # env_prefix = "GOVERNANCE_"
+        case_sensitive = False
 
 
 settings = Settings()

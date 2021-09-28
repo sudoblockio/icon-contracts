@@ -1,0 +1,5 @@
+
+blocks:
+  contract_creation:
+    - block_number: 488012  # https://tracker.icon.foundation/transaction/0x3bea9c00f108496a264d6562dfe6f11901cfb76aecb21a1f128eeae514603bd9
+      contract: act
