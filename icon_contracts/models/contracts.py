@@ -1,22 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import List, Optional
 
-from pydantic import BaseModel
 from sqlmodel import JSON, Column, Field, SQLModel
 
 from icon_contracts.core.classifier import is_irc2
 from icon_contracts.log import logger
 from icon_contracts.utils.rpc import icx_call, icx_getScoreApi
-
-
-class ContractListSelect(BaseModel):
-    contract_type: Optional[str] = None
-    status: Optional[str] = None
-    last_updated_block: Optional[int] = None
-    last_updated_timestamp: Optional[int] = None
-    created_block: Optional[int] = None
-    created_timestamp: Optional[int] = None
 
 
 class Contract(SQLModel, table=True):

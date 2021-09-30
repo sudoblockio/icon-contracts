@@ -7,6 +7,8 @@ from icon_contracts.core.classifier import is_irc2
 
 VALID_IRC2_CONTRACTS = [
     ("balanced_abi.json", True),
+    ("act_abi.json", True),
+    ("chihua_abi.json", True),
     ("idol_abi.json", False),
     ("irc2_abi_broken_name_schema.json", False),
     ("irc2_abi_broken_name_missing.json", False),

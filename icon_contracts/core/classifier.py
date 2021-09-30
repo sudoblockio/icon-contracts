@@ -33,13 +33,37 @@ IRC2_METHODS = [
         "outputs": [],
     },
     {
-        "name": "Mint",
-        "type": "eventlog",
+        "name": "totalSupply",
+        "type": "function",
+        "inputs": [],
+        "outputs": [{"type": "int"}],
+        "readonly": "0x1",
+    },
+    {
+        "name": "balanceOf",
+        "type": "function",
+        "inputs": [{"name": "_owner", "type": "Address"}],
+        "outputs": [{"type": "int"}],
+        "readonly": "0x1",
+    },
+    # {
+    #     "name": "Mint",
+    #     "type": "eventlog",
+    #     "inputs": [
+    #         {"name": "account", "type": "Address", "indexed": "0x1"},
+    #         {"name": "amount", "type": "int"},
+    #         {"name": "_data", "type": "bytes"},
+    #     ],
+    # },
+    {
+        "name": "transfer",
+        "type": "function",
         "inputs": [
-            {"name": "account", "type": "Address", "indexed": "0x1"},
-            {"name": "amount", "type": "int"},
-            {"name": "_data", "type": "bytes"},
+            {"name": "_to", "type": "Address"},
+            {"name": "_value", "type": "int"},
+            {"name": "_data", "default": None, "type": "bytes"},
         ],
+        "outputs": [],
     },
     {
         "name": "Transfer",
