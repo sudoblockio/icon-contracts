@@ -21,17 +21,20 @@ jobs:
         run: |
           echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
-      - name: Bring up DBs
-        run: docker-compose -f docker-compose.db.yml up -d
-
-      - name: Run unit tests
-        run: cd src && go test ./... -v
-
       - name: Bring up stack
-        run: make up
+        run: make up-dbs && sleep 30
 
-      - name: Run integration tests
-        run: cd tests && go test ./... -v
+      - name: Check stack
+        run: make ps
+
+      - name: Run tests with coverage
+        run: make test-coverage
+
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./.coverage
+          fail_ci_if_error: true
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

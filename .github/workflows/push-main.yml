@@ -18,36 +18,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Bring up DBs
-        run: docker-compose -f docker-compose.db.yml up -d && sleep 30
-
-      - name: Check DBs
-        run: make ps
-
-      - name: Run unit tests
-        run: cd src && go test -v -covermode=atomic -coverprofile=coverage.out ./...
-
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./src/coverage.out
-          flags: unit
-          fail_ci_if_error: true
-
       - name: Bring up stack
-        run: make up && sleep 30
+        run: make up-dbs && sleep 30
 
       - name: Check stack
         run: make ps
 
-      - name: Run integration tests
-        run: cd tests && go test -v -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Run tests with coverage
+        run: make test-coverage
 
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./tests/coverage.out
-          flags: integration
+          files: ./.coverage
           fail_ci_if_error: true
 
       - name: Configure AWS credentials
