@@ -18,6 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Install deps
+        run: pip3 install -r requirements.txt -r requirements_dev.txt
+
+
       - name: Bring up stack
         run: make up-dbs && sleep 30
 
