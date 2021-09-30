@@ -1,10 +1,8 @@
-from fastapi import APIRouter, Depends
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqlmodel import Field, Session, SQLModel, create_engine, select
-
 from typing import List
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from icon_contracts.db import get_session
 from icon_contracts.models.contracts import Contract
@@ -14,17 +12,43 @@ router = APIRouter()
 
 @router.get("/contracts")
 async def get_contracts(
-        session: AsyncSession = Depends(get_session)) -> List[Contract]:
+    session: AsyncSession = Depends(get_session),
+    skip: int = Query(0),
+    limit: int = Query(100),
+    contract_type: str = Query(None),
+    status: str = Query(None),
+    last_updated_block: int = Query(None),
+    last_updated_timestamp: int = Query(None),
+    created_block: int = Query(None),
+    created_timestamp: int = Query(None),
+) -> List[Contract]:
     """Return list of contracts"""
-    result = await session.execute(select(Contract))
+
+    query = select(Contract).offset(skip).limit(limit)
+
+    if contract_type:
+        query = query.where(Contract.contract_type == contract_type)
+    if status:
+        query = query.where(Contract.status == status)
+    if last_updated_block:
+        query = query.where(Contract.last_updated_block == last_updated_block)
+    if last_updated_timestamp:
+        query = query.where(Contract.last_updated_timestamp == last_updated_timestamp)
+    if created_block:
+        query = query.where(Contract.created_block == created_block)
+    if created_timestamp:
+        query = query.where(Contract.created_timestamp == created_timestamp)
+
+    result = await session.execute(query)
     contracts = result.scalars().all()
     return contracts
 
 
-@router.get("/contracts")
+@router.get("/contracts/{address}")
 async def get_contracts(
-        session: AsyncSession = Depends(get_session)) -> List[Contract]:
+    address: str, session: AsyncSession = Depends(get_session)
+) -> List[Contract]:
     """Return list of contracts"""
-    result = await session.execute(select(Contract))
+    result = await session.execute(select(Contract).where(Contract.address == address))
     contracts = result.scalars().all()
     return contracts
