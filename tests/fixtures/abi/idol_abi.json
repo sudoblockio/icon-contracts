@@ -1,0 +1,79 @@
+[
+  {
+    "name": "Comment",
+    "type": "eventlog",
+    "inputs": [
+      {
+        "name": "_user",
+        "type": "str",
+        "indexed": "0x1"
+      },
+      {
+        "name": "_artist",
+        "type": "str",
+        "indexed": "0x1"
+      },
+      {
+        "name": "_comment",
+        "type": "str"
+      }
+    ]
+  },
+  {
+    "name": "comments",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_page",
+        "type": "int"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "list"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "name",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "str"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "total_comments",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "write_comment",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_user",
+        "type": "str"
+      },
+      {
+        "name": "_artist",
+        "type": "str"
+      },
+      {
+        "name": "_comment",
+        "type": "str"
+      }
+    ],
+    "outputs": []
+  }
+]

@@ -2,48 +2,69 @@ from __future__ import annotations
 
 from typing import Any, List, Optional
 
-from fastapi.encoders import jsonable_encoder
-from sqlmodel import Field, Session, SQLModel, select
+from pydantic import BaseModel
+from sqlmodel import JSON, Column, Field, SQLModel
+
+from icon_contracts.core.classifier import is_irc2
+from icon_contracts.log import logger
+from icon_contracts.utils.rpc import icx_call, icx_getScoreApi
 
 
-class ContractBase(SQLModel):
-    address: str
-    name: str = None
-    country: str = None
-    city: str = None
-    email: str = None
-    website: str = None
-    details: str = None
-    p2p_endpoint: str = None
-    node_address: str = None
-
-
-class ContractCreate(ContractBase):
-    pass
+class ContractListSelect(BaseModel):
+    contract_type: Optional[str] = None
+    status: Optional[str] = None
+    last_updated_block: Optional[int] = None
+    last_updated_timestamp: Optional[int] = None
+    created_block: Optional[int] = None
+    created_timestamp: Optional[int] = None
 
 
 class Contract(SQLModel, table=True):
     address: str = Field(primary_key=True)
 
-    name: Optional[str] = None
-    country: Optional[str] = None
-    city: Optional[str] = None
-    email: Optional[str] = None
-    website: Optional[str] = None
-    details: Optional[str] = None
-    p2p_endpoint: Optional[str] = None
-    node_address: Optional[str] = None
+    name: Optional[str] = Field(None, index=False)
+    symbol: str = Field(None, index=False)
+    decimals: str = Field(None, index=False)
+    contract_type: str = Field("Contract", index=True, description="One of Contract, IRC2_Token")
 
-    last_updated_block: Optional[int]
-    last_updated_timestamp: Optional[int]
-    created_block: Optional[int] = None
-    created_timestamp: Optional[int] = None
+    country: Optional[str] = Field(None, index=False)
+    city: Optional[str] = Field(None, index=False)
+    email: Optional[str] = Field(None, index=False)
+    website: Optional[str] = Field(None, index=False)
+    details: Optional[str] = Field(None, index=False)
+    p2p_endpoint: Optional[str] = Field(None, index=False)
+    node_address: Optional[str] = Field(None, index=False)
 
-    current_version: Optional[str] = None
+    last_updated_block: Optional[int] = Field(None, index=True)
+    last_updated_timestamp: Optional[int] = Field(None, index=True)
+    created_block: Optional[int] = Field(None, index=True)
+    created_timestamp: Optional[int] = Field(None, index=True)
+
+    current_version: Optional[str] = Field(None, index=False)
+
+    abi: List[dict] = Field(None, index=False, sa_column=Column(JSON))
 
     status: Optional[str] = Field(
-        None, description="Field to inform audit status of 1.0 contracts."
+        None, index=True, description="Field to inform audit status of 1.0 contracts."
     )
 
-    def get(self, db: Session):
-        return db.execute(select(Contract)).scalars().all()
+    def extract_contract_details(
+        self,
+    ):
+        """Get ABI and then classify contract based on that ABI."""
+        response = icx_getScoreApi(address=self.address)
+        if response.status_code == 200:
+            self.abi = response.json()["result"]
+        else:
+            logger.info(f"Unknown abi for address {self.address}")
+            return
+
+        if is_irc2(self.abi, self.address):
+            self.contract_type = "IRC2"
+            self.symbol = icx_call(self.address, {"method": "symbol"}).json()["result"]
+            self.decimals = icx_call(self.address, {"method": "decimals"}).json()["result"]
+
+        try:
+            self.name = icx_call(self.address, {"method": "name"}).json()["result"]
+        except Exception:
+            logger.info(f"Error getting name from contract {self.address}")

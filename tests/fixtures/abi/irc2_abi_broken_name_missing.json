@@ -1,0 +1,725 @@
+[
+  {
+    "name": "Burn",
+    "type": "eventlog",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "Address",
+        "indexed": "0x1"
+      },
+      {
+        "name": "amount",
+        "type": "int"
+      }
+    ]
+  },
+  {
+    "name": "Mint",
+    "type": "eventlog",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "Address",
+        "indexed": "0x1"
+      },
+      {
+        "name": "amount",
+        "type": "int"
+      },
+      {
+        "name": "_data",
+        "type": "bytes"
+      }
+    ]
+  },
+  {
+    "name": "OraclePrice",
+    "type": "eventlog",
+    "inputs": [
+      {
+        "name": "market",
+        "type": "str",
+        "indexed": "0x1"
+      },
+      {
+        "name": "oracle_name",
+        "type": "str",
+        "indexed": "0x1"
+      },
+      {
+        "name": "oracle_address",
+        "type": "Address",
+        "indexed": "0x1"
+      },
+      {
+        "name": "price",
+        "type": "int"
+      }
+    ]
+  },
+  {
+    "name": "Transfer",
+    "type": "eventlog",
+    "inputs": [
+      {
+        "name": "_from",
+        "type": "Address",
+        "indexed": "0x1"
+      },
+      {
+        "name": "_to",
+        "type": "Address",
+        "indexed": "0x1"
+      },
+      {
+        "name": "_value",
+        "type": "int",
+        "indexed": "0x1"
+      },
+      {
+        "name": "_data",
+        "type": "bytes"
+      }
+    ]
+  },
+  {
+    "name": "availableBalanceOf",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "Address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "balanceOf",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "Address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "burn",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_amount",
+        "type": "int"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "burnFrom",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_account",
+        "type": "Address"
+      },
+      {
+        "name": "_amount",
+        "type": "int"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "clearYesterdaysStakeChanges",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "name": "decimals",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "detailsBalanceOf",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "Address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "dict"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getAdmin",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "Address"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getDay",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getDex",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "dict"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getDividends",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "Address"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getGovernance",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "Address"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getMinInterval",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getMinimumStake",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getOracle",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "dict"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getOracleName",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "dict"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getPeg",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "str"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getSnapshotEnabled",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getStakeUpdates",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "dict"
+      }
+    ]
+  },
+  {
+    "name": "getStakingEnabled",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getTimeOffset",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getUnstakingPeriod",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "getbnUSD",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "dict"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "lastPriceInLoop",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "loadBalnStakeSnapshot",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_data",
+        "type": "[]struct",
+        "fields": [
+          {
+            "name": "address",
+            "type": "Address"
+          },
+          {
+            "name": "amount",
+            "type": "int"
+          },
+          {
+            "name": "day",
+            "type": "int"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "loadTotalStakeSnapshot",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_data",
+        "type": "[]struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "int"
+          },
+          {
+            "name": "day",
+            "type": "int"
+          }
+        ]
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "mint",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_amount",
+        "type": "int"
+      },
+      {
+        "name": "_data",
+        "default": null,
+        "type": "bytes"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "mintTo",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_account",
+        "type": "Address"
+      },
+      {
+        "name": "_amount",
+        "type": "int"
+      },
+      {
+        "name": "_data",
+        "default": null,
+        "type": "bytes"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "priceInLoop",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ]
+  },
+  {
+    "name": "setAdmin",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_admin",
+        "type": "Address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setDex",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "Address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setDividends",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_score",
+        "type": "Address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setGovernance",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "Address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setMinInterval",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_interval",
+        "type": "int"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setMinimumStake",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_amount",
+        "type": "int"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setOracle",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "Address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setOracleName",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_name",
+        "type": "str"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setTimeOffset",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "setUnstakingPeriod",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_time",
+        "type": "int"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "setbnUSD",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "Address"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "stake",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_value",
+        "type": "int"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "stakedBalanceOf",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "Address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "stakedBalanceOfAt",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_account",
+        "type": "Address"
+      },
+      {
+        "name": "_day",
+        "type": "int"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "switchStakeUpdateDB",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "symbol",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "str"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "toggleEnableSnapshot",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "toggleStakingEnabled",
+    "type": "function",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "name": "totalStakedBalance",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "totalStakedBalanceOfAt",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_day",
+        "type": "int"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "totalSupply",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  },
+  {
+    "name": "transfer",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_to",
+        "type": "Address"
+      },
+      {
+        "name": "_value",
+        "type": "int"
+      },
+      {
+        "name": "_data",
+        "default": null,
+        "type": "bytes"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "name": "unstakedBalanceOf",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "Address"
+      }
+    ],
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1"
+  }
+]

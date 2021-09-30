@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "string"
 
     # ICON Nodes
-    icon_node_url = "http://34.218.244.40:9000/api/v3"
-    # icon_node_url = "https://icon.geometry-dev.net/api/v3"
+    ICON_NODE_URL = "https://icon.geometry-dev.net/api/v3"
+    BACKUP_ICON_NODE_URL = "http://34.218.244.40:9000/api/v3"
 
     # Kafka
     KAFKA_BROKER_URL: str = "localhost:29092"
@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     # Endpoints
     MAX_PAGE_SIZE: int = 100
 
+    UNZIP_PYTHON_SOURCE_CODE: bool = False
+
     # # Redis
     # REDIS_HOST: str = "redis"
     # REDIS_PORT: int = 6379
@@ -66,7 +68,7 @@ class Settings(BaseSettings):
     # REDIS_SENTINEL_CLIENT_MODE: bool = False
     # REDIS_SENTINEL_CLIENT_MASTER_NAME: str = "master"
 
-    governance_address: str = "cx0000000000000000000000000000000000000000"
+    _governance_address: str = "cx0000000000000000000000000000000000000000"
     one_address: str = "cx0000000000000000000000000000000000000001"
 
     class Config:
