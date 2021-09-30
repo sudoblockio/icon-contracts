@@ -35,17 +35,15 @@ api:
     prefix: "/metrics"
   rest:
     prefix: "/api/v1"
-  websocket:
-    prefix: "/ws/v1"
   logging:
     level: INFO
     toFile: false
     filename: "api.log"
     format: string
   db:
-    user: postgres
-    password: changeme
-    host: localhost
+    user: ""
+    password: ""
+    host: ""
     port: 5432
     database: contracts
   resources:
@@ -84,9 +82,9 @@ worker:
     filename: "worker.log"
     format: string
   db:
-    user: postgres
-    password: changeme
-    host: localhost
+    user: ""
+    password: ""
+    host: ""
     port: 5432
     database: contracts
   kafka:
@@ -109,9 +107,7 @@ worker:
 kafka:
   kafkaBrokerURL: ""
   schemaRegistryURL: ""
-#  kafkaGroupID: websocket-group
   consumerGroup: contracts-consumer-group
-#  schemaNameTopics: "contracts-ws:block"
 
 #db:
 #  driver: postgres
