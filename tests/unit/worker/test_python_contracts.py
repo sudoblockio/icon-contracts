@@ -6,8 +6,6 @@ def test_import_source(fixtures_dir):
     import inspect
     import sys
 
-    from iconservice import IconScoreBase, IconScoreDatabase
-
     contract_path = os.path.join(fixtures_dir, "python_contracts", "baln")
 
     # Import the source
@@ -22,6 +20,8 @@ def test_import_source(fixtures_dir):
 
         print(e)
         # raise e
+
+    # from iconservice import IconScoreBase, IconScoreDatabase
     # scores = IconScoreBase.__subclasses__()
     # contract_obj = scores[1]
     # contract = inspect.signature(contract_obj)
