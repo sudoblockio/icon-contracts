@@ -8,6 +8,7 @@ grpcio==1.40.0
 protobuf
 confluent_kafka
 
+psycopg2-binary
 alembic==1.7.1
 asyncpg==0.24.0
 fastapi==0.68.1
