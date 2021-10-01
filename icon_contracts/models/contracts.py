@@ -34,6 +34,14 @@ class Contract(SQLModel, table=True):
 
     abi: List[dict] = Field(None, index=False, sa_column=Column(JSON))
 
+    source_code_link: str = Field(None, index=False)
+    revision_number: int = Field(
+        -1,
+        index=False,
+        description="Out of order ID for zipped up source code in s3 "
+        "/bucket/[address]_[revision_number].zip",
+    )
+
     status: Optional[str] = Field(
         None, index=True, description="Field to inform audit status of 1.0 contracts."
     )

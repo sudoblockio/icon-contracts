@@ -1,5 +1,7 @@
 
 nanoid==2.0.0
+
+boto3
 requests==2.26.0
 loguru==0.5.3
 prometheus_client==0.11.0

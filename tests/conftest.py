@@ -4,10 +4,12 @@ from typing import Generator
 
 import pytest
 from _pytest.logging import caplog as _caplog
+from dotenv import dotenv_values
 from fastapi.testclient import TestClient
 from loguru import logger
 from sqlalchemy.orm import sessionmaker
 
+from icon_contracts.config import settings
 from icon_contracts.main_api import app
 from icon_contracts.workers.db import engine
 
@@ -44,3 +46,14 @@ def caplog(_caplog):
 @pytest.fixture
 def fixtures_dir():
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), "fixtures")
+
+
+@pytest.fixture()
+def init_secrets(monkeypatch):
+    """Source an .env file in the parent directory."""
+    os.chdir(os.path.join(os.path.dirname(__file__), ".."))
+    if os.path.isfile(".env"):
+        config = dotenv_values(".env")
+        for k, v in config.items():
+            monkeypatch.setattr(settings, k, v)
+    yield

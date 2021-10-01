@@ -7,7 +7,7 @@ from sqlmodel import col, select
 from icon_contracts.config import settings
 from icon_contracts.log import logger
 from icon_contracts.models.contracts import Contract
-from icon_contracts.utils.contract_content import unzip_content_to_dir
+from icon_contracts.utils.contract_content import zip_content_to_dir
 from icon_contracts.workers.kafka import Worker
 
 

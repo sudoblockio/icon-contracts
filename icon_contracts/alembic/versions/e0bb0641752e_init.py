@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6e054c85f163
+Revision ID: e0bb0641752e
 Revises:
-Create Date: 2021-09-29 19:48:01.889089
+Create Date: 2021-09-30 23:48:03.096695
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlmodel
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "6e054c85f163"
+revision = "e0bb0641752e"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -38,6 +38,8 @@ def upgrade():
         sa.Column("created_block", sa.Integer(), nullable=True),
         sa.Column("created_timestamp", sa.Integer(), nullable=True),
         sa.Column("current_version", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("source_code_link", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("revision_number", sa.Integer(), nullable=True),
         sa.Column("status", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.PrimaryKeyConstraint("address"),
     )

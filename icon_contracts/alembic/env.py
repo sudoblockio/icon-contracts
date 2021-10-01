@@ -10,11 +10,11 @@ from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel import SQLModel
 
+from icon_contracts.api.db import ASYNC_SQLALCHEMY_DATABASE_URL
+
 # TODO: Make sure this works!!!
 # Other versions imported each object
-from icon_contracts import models
-from icon_contracts.api.db import ASYNC_SQLALCHEMY_DATABASE_URL
-from icon_contracts.models import *
+from icon_contracts.models.contracts import Contract
 
 config = context.config
 

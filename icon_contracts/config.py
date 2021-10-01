@@ -43,7 +43,6 @@ class Settings(BaseSettings):
     # Topics
     CONSUMER_GROUP_HEAD: str = "contracts-head"
     CONSUMER_GROUP_TAIL: str = "contracts-tail"
-    SCHEMA_NAME_TOPICS: str = "contracts-ws:block"
 
     CONSUMER_TOPIC_BLOCKS: str = "contracts"
     CONSUMER_TOPIC_TRANSACTIONS: str = "transactions"
@@ -59,7 +58,7 @@ class Settings(BaseSettings):
     # Contract S3 Upload
     CONTRACTS_S3_AWS_ACCESS_KEY_ID: str = None
     CONTRACTS_S3_AWS_SECRET_ACCESS_KEY: str = None
-    CONTRACTS_S3_BUCKET: str = None
+    CONTRACTS_S3_BUCKET: str = "icon-explorer-dev"
 
     # Endpoints
     MAX_PAGE_SIZE: int = 100

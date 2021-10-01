@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 from uuid import uuid4
 
 from google.protobuf.json_format import MessageToJson
@@ -8,10 +10,7 @@ from icon_contracts.config import settings
 from icon_contracts.log import logger
 from icon_contracts.models.contracts import Contract
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
-from icon_contracts.utils.contract_content import (
-    find_and_load_package_json,
-    unzip_content_to_dir,
-)
+from icon_contracts.utils.contract_content import upload_to_s3, zip_content_to_dir
 from icon_contracts.utils.rpc import icx_call, icx_getTransactionResult
 from icon_contracts.workers.db import engine
 from icon_contracts.workers.kafka import Worker
@@ -41,27 +40,11 @@ class TransactionsWorker(Worker):
             contract = Contract(
                 address=address,
                 last_updated_block=value.block_number,
-                last_updated_timestamp=timestamp,
+                # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
                 created_block=value.block_number,
                 created_timestamp=timestamp,
                 status="Submitted",
             )
-
-        if settings.UNZIP_PYTHON_SOURCE_CODE:
-            # Unzip the byte string content into a tmp directory
-            # TODO: Determine what to do here
-            #  1. Unzip it and push it to s3 - insecure
-            #  2. Compile it and extract metadata - How?
-            #  3. Do nothing - Super secure
-            contract_path = unzip_content_to_dir(content, value.hash)
-            package_json = find_and_load_package_json(contract_path)
-            if package_json == NotADirectoryError:
-                self.produce(
-                    topic=f"{settings.name}-illegilable-input-contract-dlq",
-                    key=value.hash,
-                    value=MessageToJson(value),
-                )
-                return
 
         # Out of order processes
         # Checking last_updated_timestamp case for when we see a contract approval
@@ -71,10 +54,25 @@ class TransactionsWorker(Worker):
             or contract.last_updated_timestamp is None
         ):
             logger.info(f"Updating contract address = {address} at block = {value.block_number}")
-            if settings.UNZIP_PYTHON_SOURCE_CODE:
-                contract.current_version = package_json["version"]  # noqa
 
-            contract.name = icx_call(address, {"method": "name"}).json()["result"]
+            # If we have access credentials
+            if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
+                # Increment the revision number
+                contract.revision_number = +1
+                zip_name = f"{contract.address}_{contract.revision_number}.zip"
+                # Unzip the contents of the dict to a directory
+                contract_path = zip_content_to_dir(content, zip_name)
+                # Upload to
+                upload_to_s3(contract_path, address)
+                # Cleanup
+                shutil.rmtree(os.path.dirname(contract_path))
+            else:
+                logger.info(f"Skip uploading tx {value.hash}")
+
+            name_response = icx_call(address, {"method": "name"})
+            if name_response.status_code == 200:
+                contract.name = icx_call(address, {"method": "name"}).json()["result"]
+
             contract.last_updated_block = value.block_number
             contract.last_updated_timestamp = timestamp
 
@@ -201,5 +199,5 @@ def transactions_worker_tail():
 
 
 if __name__ == "__main__":
-    transactions_worker_head()
-    # transactions_worker_tail()
+    # transactions_worker_head()
+    transactions_worker_tail()
