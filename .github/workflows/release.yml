@@ -22,7 +22,9 @@ jobs:
           echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
       - name: Install deps
-        run: pip3 install -r requirements.txt -r requirements_dev.txt
+        run: |
+          pip3 install -r requirements_api.txt -r requirements_worker.txt -r requirements_dev.txt
+          pip3 install --upgrade protobuf
 
       - name: Bring up stack
         run: make up-dbs && sleep 30
@@ -140,26 +142,26 @@ jobs:
           message: 'Update prod deployment (WORKER) image version to ${{ github.run_number }}'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update dev-mainnet deployment values file (API) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
-          propertyPath: 'api.image.tag'
-          value: ${{ github.run_number }}
-          branch: deployment
-          targetBranch: main
-          createPR: 'false'
-          message: 'Update prod deployment (API) image version to ${{ github.run_number }}'
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update dev-mainnet deployment values file (WORKER) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
-          propertyPath: 'worker.image.tag'
-          value: ${{ github.run_number }}
-          branch: deployment
-          targetBranch: main
-          createPR: 'false'
-          message: 'Update prod deployment (WORKER) image version to ${{ github.run_number }}'
-          token: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Update dev-mainnet deployment values file (API) and re-commit
+#        uses: fjogeleit/yaml-update-action@master
+#        with:
+#          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
+#          propertyPath: 'api.image.tag'
+#          value: ${{ github.run_number }}
+#          branch: deployment
+#          targetBranch: main
+#          createPR: 'false'
+#          message: 'Update prod deployment (API) image version to ${{ github.run_number }}'
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Update dev-mainnet deployment values file (WORKER) and re-commit
+#        uses: fjogeleit/yaml-update-action@master
+#        with:
+#          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
+#          propertyPath: 'worker.image.tag'
+#          value: ${{ github.run_number }}
+#          branch: deployment
+#          targetBranch: main
+#          createPR: 'false'
+#          message: 'Update prod deployment (WORKER) image version to ${{ github.run_number }}'
+#          token: ${{ secrets.GITHUB_TOKEN }}

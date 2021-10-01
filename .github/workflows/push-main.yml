@@ -118,28 +118,28 @@ jobs:
           updateFile: true
           workDir: deployment-dev
 
-      - name: Update dev-mainnet deployment values file (API) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
-          propertyPath: 'api.image.tag'
-          value: ${{ github.run_number }}
-          branch: deployment-dev
-          createPR: 'false'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          updateFile: true
-          commitChange: false
-          workDir: deployment-dev
-
-      - name: Update dev-mainnet deployment values file (WORKER) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
-          propertyPath: 'worker.image.tag'
-          value: ${{ github.run_number }}
-          branch: deployment-dev
-          createPR: 'false'
-          message: 'Update dev deployment (sejong) image versions to ${{ github.run_number }}'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          updateFile: true
-          workDir: deployment-dev
+#      - name: Update dev-mainnet deployment values file (API) and re-commit
+#        uses: fjogeleit/yaml-update-action@master
+#        with:
+#          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
+#          propertyPath: 'api.image.tag'
+#          value: ${{ github.run_number }}
+#          branch: deployment-dev
+#          createPR: 'false'
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          updateFile: true
+#          commitChange: false
+#          workDir: deployment-dev
+#
+#      - name: Update dev-mainnet deployment values file (WORKER) and re-commit
+#        uses: fjogeleit/yaml-update-action@master
+#        with:
+#          valueFile: 'chart/deployments/dev-sejong/values.dev.yaml'
+#          propertyPath: 'worker.image.tag'
+#          value: ${{ github.run_number }}
+#          branch: deployment-dev
+#          createPR: 'false'
+#          message: 'Update dev deployment (sejong) image versions to ${{ github.run_number }}'
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          updateFile: true
+#          workDir: deployment-dev
