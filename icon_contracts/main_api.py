@@ -1,15 +1,14 @@
 import asyncio
-from loguru import logger
 from multiprocessing.pool import ThreadPool
-from prometheus_client import start_http_server
 
 import uvicorn
 from fastapi import FastAPI
+from loguru import logger
+from prometheus_client import start_http_server
 from starlette.middleware.cors import CORSMiddleware
 
-from icon_contracts.config import settings
-# from icon_contracts.db import init_db
 from icon_contracts.api.v1.router import api_router
+from icon_contracts.config import settings
 
 tags_metadata = [
     {
@@ -36,18 +35,8 @@ app.add_middleware(
 )
 
 logger.info("Starting metrics server.")
-# metrics_pool = ThreadPool(1)
-# metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT, settings.METRICS_ADDRESS))
-# start_http_server(9401, "localhost")
-
-# async def this():
-#     await init_db()
-    # asyncio.run(init_db())
-
-# asyncio.create_task(init_db())
-
-# asyncio.create_task(init_db())
-# this()
+metrics_pool = ThreadPool(1)
+metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT, settings.METRICS_ADDRESS))
 
 logger.info("Starting application...")
 app.include_router(api_router, prefix=settings.REST_PREFIX)

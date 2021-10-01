@@ -2,27 +2,23 @@
 
 # from sqlalchemy import engine_from_config, pool
 
-from icon_contracts.models import *
-
 import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from alembic import context
+from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel import SQLModel
-
-from alembic import context
-
-from icon_contracts.db import ASYNC_SQLALCHEMY_DATABASE_URL
 
 # TODO: Make sure this works!!!
 # Other versions imported each object
 from icon_contracts import models
+from icon_contracts.api.db import ASYNC_SQLALCHEMY_DATABASE_URL
+from icon_contracts.models import *
 
 config = context.config
 
-config.set_main_option('sqlalchemy.url', ASYNC_SQLALCHEMY_DATABASE_URL)
+config.set_main_option("sqlalchemy.url", ASYNC_SQLALCHEMY_DATABASE_URL)
 
 fileConfig(config.config_file_name)
 
@@ -104,5 +100,3 @@ async def run_migrations_online():
 #     asyncio.run(run_migrations_online())
 #     # run_migrations_online()
 asyncio.run(run_migrations_online())
-
-

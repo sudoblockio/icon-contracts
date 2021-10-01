@@ -24,6 +24,7 @@ class Worker(BaseModel):
 
     kafka_server: str = settings.KAFKA_BROKER_URL
     consumer_group: str
+    auto_offset_reset: str = "earliest"
 
     topic: str
 
@@ -45,7 +46,8 @@ class Worker(BaseModel):
                 "group.id": self.consumer_group,
                 "key.deserializer": StringDeserializer("utf_8"),
                 "value.deserializer": self.consumer_deserializer,
-                "auto.offset.reset": "earliest",
+                # Offset determined by worker type head (latest) or tail (earliest)
+                "auto.offset.reset": self.auto_offset_reset,
             }
         )
 
@@ -86,7 +88,7 @@ class Worker(BaseModel):
                     err_msg = "{topic} {partition} reached end at offset {offset}".format(
                         topic=msg.topic(),
                         partition=msg.partition(),
-                        offset=msg.offset(),
+                        offset=msg.auto_offset_reset(),
                     )
                     logger.error("Kafka consumer: " + err_msg)
                 if msg.error().code() == KafkaError.UNKNOWN_TOPIC_OR_PART:

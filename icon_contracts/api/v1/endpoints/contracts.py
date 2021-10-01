@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from icon_contracts.db import get_session
+from icon_contracts.api.db import get_session
 from icon_contracts.models.contracts import Contract
 
 router = APIRouter()
@@ -14,7 +14,7 @@ router = APIRouter()
 async def get_contracts(
     session: AsyncSession = Depends(get_session),
     skip: int = Query(0),
-    limit: int = Query(100),
+    limit: int = Query(100, gt=0, lt=100),
     contract_type: str = Query(None),
     status: str = Query(None),
     last_updated_block: int = Query(None),

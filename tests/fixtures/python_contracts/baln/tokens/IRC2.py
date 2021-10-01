@@ -1,6 +1,6 @@
+from baln.utils.checks import *
 from iconservice import *
 
-from ..utils.checks import *
 from ..utils.consts import *
 from .IIRC2 import TokenStandard
 

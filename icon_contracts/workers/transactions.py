@@ -2,6 +2,7 @@ import json
 from uuid import uuid4
 
 from google.protobuf.json_format import MessageToJson
+from sqlalchemy.orm import sessionmaker
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
@@ -12,6 +13,7 @@ from icon_contracts.utils.contract_content import (
     unzip_content_to_dir,
 )
 from icon_contracts.utils.rpc import icx_call, icx_getTransactionResult
+from icon_contracts.workers.db import engine
 from icon_contracts.workers.kafka import Worker
 
 
@@ -170,17 +172,34 @@ class TransactionsWorker(Worker):
         #     print()
 
 
-def transactions_worker(session):
+def transactions_worker_head():
+    SessionMade = sessionmaker(bind=engine)
+    session = SessionMade()
+
     kafka = TransactionsWorker(
         session=session,
         topic="transactions",
-        consumer_group=str(uuid4()),
+        consumer_group=settings.CONSUMER_GROUP_HEAD,
+        auto_offset_reset="latest",
+    )
+
+    kafka.start()
+
+
+def transactions_worker_tail():
+    SessionMade = sessionmaker(bind=engine)
+    session = SessionMade()
+
+    kafka = TransactionsWorker(
+        session=session,
+        topic="transactions",
+        consumer_group=settings.CONSUMER_GROUP_TAIL,
+        auto_offset_reset="earliest",
     )
 
     kafka.start()
 
 
 if __name__ == "__main__":
-    from icon_contracts.db import session
-
-    transactions_worker(session)
+    transactions_worker_head()
+    # transactions_worker_tail()

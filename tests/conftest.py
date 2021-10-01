@@ -6,9 +6,10 @@ import pytest
 from _pytest.logging import caplog as _caplog
 from fastapi.testclient import TestClient
 from loguru import logger
+from sqlalchemy.orm import sessionmaker
 
-from icon_contracts.db import get_session, session
 from icon_contracts.main_api import app
+from icon_contracts.workers.db import engine
 
 # @pytest.fixture(scope="session")
 # def db() -> Generator:
@@ -17,6 +18,9 @@ from icon_contracts.main_api import app
 
 @pytest.fixture(scope="session")
 def db():
+    SessionMade = sessionmaker(bind=engine)
+    session = SessionMade()
+
     yield session
 
 

@@ -1,6 +1,6 @@
 import pytest
 
-from icon_contracts.workers.transactions import transactions_worker
+from icon_contracts.workers.transactions import transactions_worker_tail
 
 
 @pytest.fixture()

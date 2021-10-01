@@ -38,9 +38,7 @@ class Contract(SQLModel, table=True):
         None, index=True, description="Field to inform audit status of 1.0 contracts."
     )
 
-    def extract_contract_details(
-        self,
-    ):
+    def extract_contract_details(self):
         """Get ABI and then classify contract based on that ABI."""
         response = icx_getScoreApi(address=self.address)
         if response.status_code == 200:

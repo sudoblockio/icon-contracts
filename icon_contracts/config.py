@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     KAFKA_GROUP_ID: str = "contracts-service"
 
     # Topics
-    CONSUMER_GROUP: str = "contracts-consumer-group"
+    CONSUMER_GROUP_HEAD: str = "contracts-head"
+    CONSUMER_GROUP_TAIL: str = "contracts-tail"
     SCHEMA_NAME_TOPICS: str = "contracts-ws:block"
 
     CONSUMER_TOPIC_BLOCKS: str = "contracts"
@@ -54,6 +55,11 @@ class Settings(BaseSettings):
     POSTGRES_SERVER: str = "127.0.0.1"
     POSTGRES_PORT: str = "5432"
     POSTGRES_DATABASE: str = "postgres"
+
+    # Contract S3 Upload
+    CONTRACTS_S3_AWS_ACCESS_KEY_ID: str = None
+    CONTRACTS_S3_AWS_SECRET_ACCESS_KEY: str = None
+    CONTRACTS_S3_BUCKET: str = None
 
     # Endpoints
     MAX_PAGE_SIZE: int = 100
