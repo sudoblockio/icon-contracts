@@ -13,7 +13,7 @@ from icon_contracts.workers.transactions import (
 logger.info("Starting metrics server.")
 
 metrics_pool = ThreadPool(1)
-metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT, settings.METRICS_ADDRESS))
+metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT + 1, settings.METRICS_ADDRESS))
 
 transactions_worker_head_thread = Thread(
     target=transactions_worker_head,
@@ -25,8 +25,8 @@ transactions_worker_tail_thread = Thread(
     args=(),
 )
 
-transactions_worker_head_thread.daemon = True
+# transactions_worker_head_thread.daemon = True
+transactions_worker_tail_thread.start()
 transactions_worker_head_thread.start()
 
-transactions_worker_tail_thread.daemon = True
-transactions_worker_tail_thread.start()
+# transactions_worker_tail_thread.daemon = True
