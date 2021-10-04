@@ -27,15 +27,15 @@ x-env: &env
   LOG_FORMAT: "string"
 
   # Kafka
-  KAFKA_BROKER_URL: "kafka:29092"
-  SCHEMA_REGISTRY_URL: "schemaregistry:8081"
+  KAFKA_BROKER_URL: "kafka:9092"
+  SCHEMA_REGISTRY_URL: "http://schemaregistry:8081"
   KAFKA_GROUP_ID: "contracts-service"
 
   # Topics
   CONSUMER_GROUP: "contracts-consumer-group"
   SCHEMA_NAME_TOPICS: "contracts-ws:block"
 
-  CONSUMER_TOPIC_BLOCKS: "contracts"
+  CONSUMER_TOPIC_BLOCKS: "blocks"
   CONSUMER_TOPIC_TRANSACTIONS: "transactions"
   CONSUMER_TOPIC_LOGS: "logs"
 
