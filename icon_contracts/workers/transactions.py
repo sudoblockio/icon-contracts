@@ -176,7 +176,7 @@ def transactions_worker_head():
 
     kafka = TransactionsWorker(
         session=session,
-        topic="transactions",
+        topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
         consumer_group=settings.CONSUMER_GROUP_HEAD,
         auto_offset_reset="latest",
     )
@@ -190,7 +190,7 @@ def transactions_worker_tail():
 
     kafka = TransactionsWorker(
         session=session,
-        topic="transactions",
+        topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
         consumer_group=settings.CONSUMER_GROUP_TAIL,
         auto_offset_reset="earliest",
     )
