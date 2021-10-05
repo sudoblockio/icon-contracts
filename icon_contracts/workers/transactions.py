@@ -1,13 +1,13 @@
 import json
 import os
 import shutil
-from uuid import uuid4
 
 from google.protobuf.json_format import MessageToJson
 from sqlalchemy.orm import sessionmaker
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
+from icon_contracts.metrics import Metrics
 from icon_contracts.models.contracts import Contract
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import upload_to_s3, zip_content_to_dir
@@ -15,10 +15,14 @@ from icon_contracts.utils.rpc import icx_call, icx_getTransactionResult
 from icon_contracts.workers.db import engine
 from icon_contracts.workers.kafka import Worker
 
+metrics = Metrics()
+
 
 class TransactionsWorker(Worker):
 
     msg_count: int = 0
+    contracts_created_python: int = 0
+    contracts_updated_python: int = 0
 
     def process_contract_creation(self):
         pass
@@ -57,6 +61,8 @@ class TransactionsWorker(Worker):
             or contract.last_updated_timestamp is None
         ):
             logger.info(f"Updating contract address = {address} at block = {value.block_number}")
+            self.contracts_updated_python += 1
+            metrics.contracts_created_python.set(self.contracts_updated_python)
 
             # If we have access credentials
             if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
@@ -132,11 +138,16 @@ class TransactionsWorker(Worker):
                 logger.info(
                     f"Creating contract from approval for address = {address} at block = {value.block_number}"
                 )
+                self.contracts_created_python += 1
+                metrics.contracts_created_python.set(self.contracts_created_python)
                 contract = Contract(address=address, status=status)
             else:
                 logger.info(
                     f"Updating contract status from approval for address = {address} at block = {value.block_number}"
                 )
+                self.contracts_updated_python += 1
+                metrics.contracts_created_python.set(self.contracts_updated_python)
+
                 contract.status = status
 
             self.session.add(contract)
@@ -148,6 +159,7 @@ class TransactionsWorker(Worker):
         self.msg_count += 1
         if self.msg_count % 10000 == 0:
             logger.info(f"msg count {self.msg_count} and block {value.block_number}")
+            metrics.block_height.set(value.block_number)
 
         # Pass on any invalid Tx in this service
         if value.receipt_status != 1:
