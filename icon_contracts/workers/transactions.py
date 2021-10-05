@@ -157,7 +157,10 @@ class TransactionsWorker(Worker):
         value = msg.value()
 
         if self.msg_count % 10000 == 0:
-            logger.info(f"msg count {self.msg_count} and block {value.block_number}")
+            logger.info(
+                f"msg count {self.msg_count} and block {value.block_number} "
+                f"for consumer group {self.consumer_group}"
+            )
             metrics.block_height.set(value.block_number)
         self.msg_count += 1
 
