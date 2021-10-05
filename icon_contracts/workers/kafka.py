@@ -70,6 +70,7 @@ class Worker(BaseModel):
         except BufferError as e:
             self.producer.poll(1)
             self.producer.produce(topic=topic, value=value, key=key)
+        self.producer.flush()
 
     def start(self):
         self.consumer.subscribe([self.topic])

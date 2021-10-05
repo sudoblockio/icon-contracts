@@ -44,9 +44,12 @@ class Settings(BaseSettings):
     CONSUMER_GROUP_HEAD: str = "contracts-head"
     CONSUMER_GROUP_TAIL: str = "contracts-tail"
 
-    CONSUMER_TOPIC_BLOCKS: str = "contracts"
+    CONSUMER_TOPIC_BLOCKS: str = "blocks"
     CONSUMER_TOPIC_TRANSACTIONS: str = "transactions"
     CONSUMER_TOPIC_LOGS: str = "logs"
+
+    PRODUCER_TOPIC_DLQ: str = "contracts-worker-dlq"
+    PRODUCER_TOPIC_TOKENS: str = "tokens-contracts"
 
     # DB
     POSTGRES_USER: str = "postgres"

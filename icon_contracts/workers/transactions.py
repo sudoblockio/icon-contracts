@@ -102,8 +102,8 @@ class TransactionsWorker(Worker):
             logger.info(f"Unknown event for with hash = {value.hash}")
             # No idea what is going on here.
             self.produce(
-                topic=f"{settings.name}-content-type-dlq",
-                key=value.from_address,
+                topic=settings.PRODUCER_TOPIC_DLQ,
+                key="unknown-event-content-type",
                 value=MessageToJson(value),
             )
             self.producer.poll(0)

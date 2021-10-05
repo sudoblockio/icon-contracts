@@ -30,6 +30,8 @@ class Contract(SQLModel, table=True):
     created_block: Optional[int] = Field(None, index=True)
     created_timestamp: Optional[int] = Field(None, index=True)
 
+    owner_address: Optional[str] = Field(None, index=True)
+
     current_version: Optional[str] = Field(None, index=False)
 
     abi: List[dict] = Field(None, index=False, sa_column=Column(JSON))
