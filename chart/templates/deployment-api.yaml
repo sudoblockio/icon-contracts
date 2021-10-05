@@ -57,8 +57,6 @@ spec:
               value: {{ .Values.api.metrics.port | quote }}
             - name: REST_PREFIX
               value: {{ .Values.api.rest.prefix }}
-            - name: WEBSOCKET_PREFIX
-              value: {{ .Values.api.websocket.prefix }}
             - name: HEALTH_PREFIX
               value: {{ .Values.api.health.prefix }}
             - name: METRICS_PREFIX
