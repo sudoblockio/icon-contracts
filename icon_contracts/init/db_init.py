@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from sqlalchemy.orm import sessionmaker
 
@@ -20,7 +21,7 @@ def init_db():
     # Kafka - Output to topic. Other services depend on this service to
     # classify contracts as tokens. The tokens service operates off a
     # known set of contracts.
-    kafka = Worker(consumer_group="doesntmatter", topic="blocks")
+    kafka = Worker(consumer_group=str(uuid.uuid4()), topic=settings.CONSUMER_TOPIC_LOGS)
 
     for t in tokens["data"]:
         logger.info(f"Parsing {t['name']}")
