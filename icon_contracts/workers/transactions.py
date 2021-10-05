@@ -191,7 +191,7 @@ def transactions_worker_tail():
     kafka = TransactionsWorker(
         session=session,
         topic="transactions",
-        consumer_group=settings.CONSUMER_GROUP_TAIL + "foo",
+        consumer_group=settings.CONSUMER_GROUP_TAIL,
         auto_offset_reset="earliest",
     )
 

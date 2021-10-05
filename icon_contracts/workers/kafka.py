@@ -58,7 +58,7 @@ class Worker(BaseModel):
         topics = admin_client.list_topics().topics
 
         if self.topic not in topics:
-            raise RuntimeError()
+            raise RuntimeError(f"Topic {self.topic} not in {topics}")
 
         self.init()
 
