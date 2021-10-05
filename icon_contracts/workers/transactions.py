@@ -156,10 +156,10 @@ class TransactionsWorker(Worker):
     def process(self, msg):
         value = msg.value()
 
-        self.msg_count += 1
         if self.msg_count % 10000 == 0:
             logger.info(f"msg count {self.msg_count} and block {value.block_number}")
             metrics.block_height.set(value.block_number)
+        self.msg_count += 1
 
         # Pass on any invalid Tx in this service
         if value.receipt_status != 1:
