@@ -17,6 +17,9 @@ from icon_contracts.workers.kafka import Worker
 
 
 class TransactionsWorker(Worker):
+
+    msg_count: int = 0
+
     def process_contract_creation(self):
         pass
 
@@ -141,6 +144,10 @@ class TransactionsWorker(Worker):
 
     def process(self, msg):
         value = msg.value()
+
+        self.msg_count += 1
+        if self.msg_count % 10000 == 0:
+            logger.info(f"msg count {self.msg_count} and block {value.block_number}")
 
         # Pass on any invalid Tx in this service
         if value.receipt_status != 1:
