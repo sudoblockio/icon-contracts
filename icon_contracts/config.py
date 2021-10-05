@@ -8,14 +8,14 @@ class Settings(BaseSettings):
 
     # Ports
     PORT: int = 8000
-    HEALTH_PORT: int = 8180
+    HEALTH_PORT: int = 8080
     METRICS_PORT: int = 9400
 
     METRICS_ADDRESS: str = "localhost"
 
     # Prefix
     REST_PREFIX: str = "/api/v1"
-    HEALTH_PREFIX: str = "/heath"
+    HEALTH_PREFIX: str = "/health"
     METRICS_PREFIX: str = "/metrics"
     DOCS_PREFIX: str = "/api/v1/docs"
 

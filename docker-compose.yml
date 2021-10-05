@@ -6,13 +6,13 @@ x-env: &env
 
   # Ports
   PORT: "8000"
-  HEALTH_PORT: "8180"
+  HEALTH_PORT: "8000"
   METRICS_PORT: "9400"
 
   # Prefix
   REST_PREFIX: "/api/v1"
   WEBSOCKET_PREFIX: "/ws/v1"
-  HEALTH_PREFIX: "/heath"
+  HEALTH_PREFIX: "/health"
   METRICS_PREFIX: "/metrics"
 
   CORS_ALLOW_ORIGINS: "*"

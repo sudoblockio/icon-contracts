@@ -3,12 +3,14 @@ from multiprocessing.pool import ThreadPool
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi_health import health
 from loguru import logger
 from prometheus_client import start_http_server
 from starlette.middleware.cors import CORSMiddleware
 
 from icon_contracts.api.v1.router import api_router
 from icon_contracts.config import settings
+from icon_contracts.api.health import is_database_online
 
 tags_metadata = [
     {
@@ -40,6 +42,7 @@ metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT, settings.MET
 
 logger.info("Starting application...")
 app.include_router(api_router, prefix=settings.REST_PREFIX)
+app.add_api_route(settings.HEALTH_PREFIX, health([is_database_online]))
 
 if __name__ == "__main__":
     uvicorn.run(

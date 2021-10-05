@@ -27,7 +27,7 @@ api:
   internal:
     port: 80
   health:
-    port: 9300
+    port: 80
     prefix: "/health"
     pollingInterval: 60
   metrics:
