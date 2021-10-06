@@ -32,15 +32,6 @@ clean:
 build:  ## Build everything
 	docker-compose build
 
-<<<<<<< Updated upstream
-build-api:  ## Build the api
-	docker-compose build contracts-api
-
-build-worker:  ## Build the worker
-	docker-compose build contracts-worker
-
-=======
->>>>>>> Stashed changes
 ps:  ## List all containers and running status
 	docker-compose -f docker-compose.db.yml -f docker-compose.yml ps
 
