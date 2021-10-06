@@ -1,10 +1,12 @@
 email: str
 website: str
 general_name: str
+short_description: str
+long_description: str
 p_rep_address: str
 organization_city: str
 organization_country: str
-license: Enum
+license: str
 social_media:
   facebook: str
   telegram: str

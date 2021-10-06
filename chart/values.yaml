@@ -96,6 +96,9 @@ worker:
       blocks: blocks
       transactions: transactions
       logs: logs
+    consumerGroup:
+      head: contracts-head
+      tail: contracts-tail
   resources:
     requests:
       cpu: 250m
