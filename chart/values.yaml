@@ -81,6 +81,10 @@ worker:
     toFile: false
     filename: "worker.log"
     format: string
+  s3:
+    bucket: ""
+    awsAccessKey: ""
+    awsSecretAccessKey: ""
   db:
     user: ""
     password: ""

@@ -78,6 +78,16 @@ spec:
               value: {{ .Values.kafka.schemaRegistryURL }}
             - name: CONSUMER_GROUP
               value: {{ .Values.kafka.consumerGroup }}
+            - name: CONSUMER_GROUP_HEAD
+              value: {{ .Values.worker.kafka.consumerGroup.head }}
+            - name: CONSUMER_GROUP_TAIL
+              value: {{ .Values.worker.kafka.consumerGroup.tail }}
+            - name: CONTRACTS_S3_BUCKET
+              value: {{ .Values.worker.s3.bucket }}
+            - name: CONTRACTS_S3_AWS_ACCESS_KEY_ID
+              value: {{ .Values.worker.s3.awsAccessKey }}
+            - name: CONTRACTS_S3_AWS_SECRET_ACCESS_KEY
+              value: {{ .Values.worker.s3.awsSecretAccessKey }}
             - name: CONSUMER_TOPIC_BLOCKS
               value: {{ .Values.worker.kafka.topics.blocks }}
             - name: CONSUMER_TOPIC_TRANSACTIONS

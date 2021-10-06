@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # Contract S3 Upload
     CONTRACTS_S3_AWS_ACCESS_KEY_ID: str = None
     CONTRACTS_S3_AWS_SECRET_ACCESS_KEY: str = None
-    CONTRACTS_S3_BUCKET: str = "icon-explorer-dev"
+    CONTRACTS_S3_BUCKET: str = None
 
     # Endpoints
     MAX_PAGE_SIZE: int = 100
