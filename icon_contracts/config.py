@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     CONSUMER_TOPIC_LOGS: str = "logs"
 
     PRODUCER_TOPIC_DLQ: str = "contracts-worker-dlq"
-    PRODUCER_TOPIC_TOKENS: str = "tokens-contracts"
+    PRODUCER_TOPIC_CONTRACTS: str = "contracts-processed"
 
     # DB
     POSTGRES_USER: str = "postgres"

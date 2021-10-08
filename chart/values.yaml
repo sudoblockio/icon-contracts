@@ -96,6 +96,8 @@ worker:
       blocks: blocks
       transactions: transactions
       logs: logs
+      contractsProcessed: contracts-processed
+      contractsDLQ: contracts-worker-dlq
     consumerGroup:
       head: contracts-head
       tail: contracts-tail

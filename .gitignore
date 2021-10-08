@@ -4,6 +4,8 @@
 .vscode/
 .old/
 
+scratch*
+
 vaults_common
 
 # Byte-compiled / optimized / DLL files

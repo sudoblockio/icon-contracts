@@ -94,6 +94,10 @@ spec:
               value: {{ .Values.worker.kafka.topics.transactions }}
             - name: CONSUMER_TOPIC_LOGS
               value: {{ .Values.worker.kafka.topics.logs }}
+            - name: PRODUCER_TOPIC_CONTRACTS
+              value: {{ .Values.worker.kafka.topics.contractsProcessed }}
+            - name: PRODUCER_TOPIC_DLQ
+              value: {{ .Values.worker.kafka.topics.contractsDLQ }}
             - name: POSTGRES_USER
               value: {{ .Values.worker.db.user }}
             - name: POSTGRES_SERVER

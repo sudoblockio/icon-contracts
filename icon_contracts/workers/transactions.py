@@ -9,8 +9,13 @@ from icon_contracts.config import settings
 from icon_contracts.log import logger
 from icon_contracts.metrics import Metrics
 from icon_contracts.models.contracts import Contract
+from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
-from icon_contracts.utils.contract_content import upload_to_s3, zip_content_to_dir
+from icon_contracts.utils.contract_content import (
+    get_contract_name,
+    upload_to_s3,
+    zip_content_to_dir,
+)
 from icon_contracts.utils.rpc import icx_call, icx_getTransactionResult
 from icon_contracts.workers.db import engine
 from icon_contracts.workers.kafka import Worker
@@ -34,7 +39,7 @@ class TransactionsWorker(Worker):
         tx_result = icx_getTransactionResult(value.hash).json()["result"]
 
         address = tx_result["scoreAddress"]
-        timestamp = int(value.timestamp, 16) / 1e6
+        timestamp = int(value.timestamp, 16)
 
         # Check if there is a contract in the DB with that address otherwise create it
         contract = self.session.get(Contract, address)
@@ -46,6 +51,8 @@ class TransactionsWorker(Worker):
             )
             contract = Contract(
                 address=address,
+                name=get_contract_name(address),
+                owner_address=value.from_address,
                 last_updated_block=value.block_number,
                 # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
                 created_block=value.block_number,
@@ -78,10 +85,7 @@ class TransactionsWorker(Worker):
             else:
                 logger.info(f"Skip uploading tx {value.hash}")
 
-            name_response = icx_call(address, {"method": "name"})
-            if name_response.status_code == 200:
-                contract.name = icx_call(address, {"method": "name"}).json()["result"]
-
+            contract.name = get_contract_name(contract.address)
             contract.last_updated_block = value.block_number
             contract.last_updated_timestamp = timestamp
 
@@ -99,6 +103,12 @@ class TransactionsWorker(Worker):
         # Method that classifies the contract based on ABI for IRC2 stuff
         contract.extract_contract_details()
 
+        self.produce_protobuf(
+            settings.PRODUCER_TOPIC_CONTRACTS,
+            value.hash,  # Keyed on hash
+            contract_to_proto(contract),
+        )
+
         # Commit the contract
         self.session.add(contract)
         self.session.commit()
@@ -110,12 +120,12 @@ class TransactionsWorker(Worker):
         if "contentType" in data:
             logger.info(f"Unknown event for with hash = {value.hash}")
             # No idea what is going on here.
-            self.produce(
+            self.produce_json(
                 topic=settings.PRODUCER_TOPIC_DLQ,
                 key="unknown-event-content-type",
                 value=MessageToJson(value),
             )
-            self.producer.poll(0)
+            self.json_producer.poll(0)
             return
 
         # Audit related events
@@ -140,7 +150,16 @@ class TransactionsWorker(Worker):
                 )
                 self.contracts_created_python += 1
                 metrics.contracts_created_python.set(self.contracts_created_python)
-                contract = Contract(address=address, status=status)
+                contract = Contract(
+                    address=address,
+                    name=get_contract_name(address),
+                    status=status,
+                    owner_address=value.from_address,
+                    last_updated_block=value.block_number,
+                    # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
+                    created_block=value.block_number,
+                    created_timestamp=int(value.timestamp, 16),
+                )
             else:
                 logger.info(
                     f"Updating contract status from approval for address = {address} at block = {value.block_number}"
@@ -149,6 +168,12 @@ class TransactionsWorker(Worker):
                 metrics.contracts_created_python.set(self.contracts_updated_python)
 
                 contract.status = status
+
+            self.produce_protobuf(
+                settings.PRODUCER_TOPIC_CONTRACTS,
+                value.hash,  # Keyed on hash
+                contract_to_proto(contract),
+            )
 
             self.session.add(contract)
             self.session.commit()

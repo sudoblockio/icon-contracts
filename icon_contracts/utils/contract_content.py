@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
+from icon_contracts.utils.rpc import icx_call
 from icon_contracts.utils.shell import run_command
 
 
@@ -40,6 +41,14 @@ def upload_to_s3(filename: str, key: str):
     # Create an S3 client
     s3 = get_s3_client()
     s3.upload_file(filename, settings.CONTRACTS_S3_BUCKET, key)
+
+
+def get_contract_name(address):
+    name_response = icx_call(address, {"method": "name"})
+    if name_response.status_code == 200:
+        return icx_call(address, {"method": "name"}).json()["result"]
+    else:
+        return "Unknown"
 
 
 # TODO: This is viable if we want to keep track of the contracts

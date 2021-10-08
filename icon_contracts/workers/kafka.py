@@ -1,16 +1,25 @@
 from time import sleep
 from typing import Any
 
-from confluent_kafka import DeserializingConsumer, KafkaError, Producer
+from confluent_kafka import (
+    DeserializingConsumer,
+    KafkaError,
+    Producer,
+    SerializingProducer,
+)
 from confluent_kafka.admin import AdminClient
 from confluent_kafka.schema_registry import SchemaRegistryClient
-from confluent_kafka.schema_registry.protobuf import ProtobufDeserializer
-from confluent_kafka.serialization import StringDeserializer
+from confluent_kafka.schema_registry.protobuf import (
+    ProtobufDeserializer,
+    ProtobufSerializer,
+)
+from confluent_kafka.serialization import StringDeserializer, StringSerializer
 from loguru import logger
 from pydantic import BaseModel, validator
 
 # from icon_contracts.log import logger
 from icon_contracts.config import settings
+from icon_contracts.schemas.contract_processed_pb2 import ContractProcessed
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 
 
@@ -29,30 +38,46 @@ class Worker(BaseModel):
     topic: str
 
     consumer: Any = None
-    producer: Any = None
+    json_producer: Any = None
+
+    protobuf_producer: Any = None
+    protobuf_serializer: Any = None
+
     consumer_schema: Any = None
-    consumer_deserializer: Any = None
 
     def __init__(self, **data: Any):
         super().__init__(**data)
         if self.name is None:
             self.name = self.topic
 
-        self.consumer_deserializer = ProtobufDeserializer(TransactionRaw)
-
         self.consumer = DeserializingConsumer(
             {
                 "bootstrap.servers": self.kafka_server,
                 "group.id": self.consumer_group,
                 "key.deserializer": StringDeserializer("utf_8"),
-                "value.deserializer": self.consumer_deserializer,
+                "value.deserializer": ProtobufDeserializer(TransactionRaw),
                 # Offset determined by worker type head (latest) or tail (earliest)
                 "auto.offset.reset": self.auto_offset_reset,
             }
         )
 
-        # Producer
-        self.producer = Producer({"bootstrap.servers": self.kafka_server})
+        # Producers
+        # Json producer for dead letter queues
+        self.json_producer = Producer({"bootstrap.servers": self.kafka_server})
+
+        self.schema_registry_client = SchemaRegistryClient({"url": settings.SCHEMA_REGISTRY_URL})
+
+        self.protobuf_serializer = ProtobufSerializer(
+            ContractProcessed, self.schema_registry_client, conf={"auto.register.schemas": True}
+        )
+
+        self.protobuf_producer = SerializingProducer(
+            {
+                "bootstrap.servers": self.kafka_server,
+                "key.serializer": StringSerializer("utf_8"),
+                "value.serializer": self.protobuf_serializer,
+            }
+        )
 
         admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
         topics = admin_client.list_topics().topics
@@ -62,15 +87,24 @@ class Worker(BaseModel):
 
         self.init()
 
-    def produce(self, topic, key, value):
+    def produce_json(self, topic, key, value):
         try:
             # https://github.com/confluentinc/confluent-kafka-python/issues/137#issuecomment-282427382
-            self.producer.produce(topic=topic, value=value, key=key)
-            self.producer.poll(0)
-        except BufferError as e:
-            self.producer.poll(1)
-            self.producer.produce(topic=topic, value=value, key=key)
-        self.producer.flush()
+            self.json_producer.produce(topic=topic, value=value, key=key)
+            self.json_producer.poll(0)
+        except BufferError:
+            self.json_producer.poll(1)
+            self.json_producer.produce(topic=topic, value=value, key=key)
+        self.json_producer.flush()
+
+    def produce_protobuf(self, topic, key, value):
+        try:
+            self.protobuf_producer.produce(topic=topic, value=value, key=key)
+            self.protobuf_producer.poll(0)
+        except BufferError:
+            self.protobuf_producer.poll(1)
+            self.protobuf_producer.produce_json(topic=topic, value=value, key=key)
+        self.protobuf_producer.flush()
 
     def start(self):
         self.consumer.subscribe([self.topic])
@@ -104,7 +138,7 @@ class Worker(BaseModel):
                 self.process(msg)
 
         # Flush the last of the messages
-        self.producer.flush()
+        self.json_producer.flush()
 
     def init(self):
         """Overridable process that runs on init."""
