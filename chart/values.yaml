@@ -116,7 +116,7 @@ worker:
 kafka:
   kafkaBrokerURL: ""
   schemaRegistryURL: ""
-  consumerGroup: contracts-consumer-group
+#  consumerGroup: contracts-consumer-group
 
 #db:
 #  driver: postgres

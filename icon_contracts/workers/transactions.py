@@ -79,9 +79,13 @@ class TransactionsWorker(Worker):
                 # Unzip the contents of the dict to a directory
                 contract_path = zip_content_to_dir(content, zip_name)
                 # Upload to
-                upload_to_s3(contract_path, address)
+                upload_to_s3(contract_path, zip_name)
+                contract.source_code_link = (
+                    f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/{zip_name}"
+                )
                 # Cleanup
                 shutil.rmtree(os.path.dirname(contract_path))
+                logger.info(f"Uploaded contract to {contract.source_code_link}")
             else:
                 logger.info(f"Skip uploading tx {value.hash}")
 

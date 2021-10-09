@@ -75,8 +75,6 @@ spec:
               value: {{ .Values.kafka.kafkaBrokerURL }}
             - name: SCHEMA_REGISTRY_URL
               value: {{ .Values.kafka.schemaRegistryURL }}
-            - name: CONSUMER_GROUP
-              value: {{ .Values.kafka.consumerGroup }}
             - name: POSTGRES_USER
               value: {{ .Values.api.db.user }}
             - name: POSTGRES_SERVER

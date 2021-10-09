@@ -76,8 +76,6 @@ spec:
               value: {{ .Values.kafka.kafkaBrokerURL }}
             - name: SCHEMA_REGISTRY_URL
               value: {{ .Values.kafka.schemaRegistryURL }}
-            - name: CONSUMER_GROUP
-              value: {{ .Values.kafka.consumerGroup }}
             - name: CONSUMER_GROUP_HEAD
               value: {{ .Values.worker.kafka.consumerGroup.head }}
             - name: CONSUMER_GROUP_TAIL
