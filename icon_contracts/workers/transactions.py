@@ -199,17 +199,20 @@ class TransactionsWorker(Worker):
 
         # Messages are keyed by to_address
         if msg.key() == settings.one_address:
+            logger.info(f"Handling contract audit hash {value.hash}.")
             self.process_audit(value)
 
-        if msg.key() == settings._governance_address and value.receipt_status == 1:
+        if msg.key() == settings._governance_address:
 
             data = json.loads(value.data)
 
             if "contentType" in data:
                 if data["contentType"] == "application/zip":
+                    logger.info(f"Handling python contract creation hash {value.hash}.")
                     self.python_contract(data["content"], value)
 
                 if data["contentType"] == "application/java":
+                    logger.info(f"Handling java contract creation hash {value.hash}.")
                     self.java_contract(data["content"], value)
 
             return
