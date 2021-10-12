@@ -5,8 +5,15 @@ from time import sleep
 import pytest
 from compose.cli.command import project_from_options
 from compose.service import ImageType
+from dotenv import load_dotenv
 
 from icon_contracts.models.contracts import Contract
+
+
+@pytest.fixture()
+def load_environment_variables(chdir_base):
+    load_dotenv()
+    yield
 
 
 @pytest.fixture()
