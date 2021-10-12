@@ -48,6 +48,13 @@ def fixtures_dir():
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), "fixtures")
 
 
+@pytest.fixture
+def chdir_base():
+    base = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..")
+    os.chdir(base)
+    yield
+
+
 @pytest.fixture()
 def init_secrets(monkeypatch):
     """Source an .env file in the parent directory."""

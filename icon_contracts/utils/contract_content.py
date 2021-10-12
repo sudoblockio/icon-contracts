@@ -40,7 +40,7 @@ def get_s3_client():
 def upload_to_s3(filename: str, key: str):
     # Create an S3 client
     s3 = get_s3_client()
-    s3.upload_file(filename, settings.CONTRACTS_S3_BUCKET, key)
+    s3.upload_file(filename, settings.CONTRACTS_S3_BUCKET, "contract-sources/" + key)
 
 
 def get_contract_name(address):
