@@ -42,4 +42,4 @@ transactions_worker_tail_thread = Thread(
 
 transactions_worker_head_thread.start()
 transactions_worker_tail_thread.start()
-transactions_worker_tail_thread.join()
+# transactions_worker_tail_thread.join()

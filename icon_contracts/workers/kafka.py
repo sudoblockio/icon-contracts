@@ -55,6 +55,7 @@ class Worker(BaseModel):
                 "bootstrap.servers": self.kafka_server,
                 "group.id": self.consumer_group,
                 "key.deserializer": StringDeserializer("utf_8"),
+                "queued.max.messages.kbytes": "100MB",
                 "value.deserializer": ProtobufDeserializer(TransactionRaw),
                 # Offset determined by worker type head (latest) or tail (earliest)
                 "auto.offset.reset": self.auto_offset_reset,
