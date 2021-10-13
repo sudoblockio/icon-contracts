@@ -77,7 +77,7 @@ class TransactionsWorker(Worker):
             if self.s3_client:
                 # Increment the revision number
                 contract.revision_number = +1
-                zip_name = f"{contract.address}_{contract.revision_number}.zip"
+                zip_name = f"{contract.address}_{contract.revision_number}"
                 # Unzip the contents of the dict to a directory
                 contract_path = zip_content_to_dir(content, zip_name)
                 # Upload to
