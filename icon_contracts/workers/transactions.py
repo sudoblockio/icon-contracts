@@ -252,7 +252,7 @@ def transactions_worker_tail(s3_client):
         s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=settings.CONSUMER_GROUP_TAIL + "5",
+        consumer_group=settings.CONSUMER_GROUP_TAIL,
         auto_offset_reset="earliest",
     )
 
