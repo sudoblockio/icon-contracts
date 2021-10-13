@@ -20,7 +20,7 @@ s3_client = get_s3_client()
 
 transactions_worker_head_thread = Thread(
     target=transactions_worker_head,
-    args=[s3_client],
+    args=[],
 )
 
 transactions_worker_tail_thread = Thread(

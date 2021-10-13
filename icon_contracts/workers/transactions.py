@@ -229,12 +229,12 @@ class TransactionsWorker(Worker):
         #     print()
 
 
-def transactions_worker_head(s3_client):
+def transactions_worker_head():
     SessionMade = sessionmaker(bind=engine)
     session = SessionMade()
 
     kafka = TransactionsWorker(
-        s3_client=s3_client,
+        # s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
         consumer_group=settings.CONSUMER_GROUP_HEAD,
