@@ -164,7 +164,7 @@ class TransactionsWorker(Worker):
                     status=status,
                     owner_address=value.from_address,
                     # We deal with update dates based on submission due to 2.0 dropping audit
-                    # last_updated_block=value.block_number,
+                    last_updated_block=0,
                     # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
                     # created_block=value.block_number,
                     # created_timestamp=int(value.timestamp, 16),

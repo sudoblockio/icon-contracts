@@ -29,15 +29,15 @@ def zip_content_to_dir(content: str, zip_name: str) -> str:
     return contract_path + ".zip"
 
 
-def get_s3_client():
-    if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
-        return boto3.client(
-            "s3",
-            aws_access_key_id=settings.CONTRACTS_S3_AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY,
-        )
-    else:
-        return None
+# def get_s3_client():
+#     if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
+#         return boto3.client(
+#             "s3",
+#             aws_access_key_id=settings.CONTRACTS_S3_AWS_ACCESS_KEY_ID,
+#             aws_secret_access_key=settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY,
+#         )
+#     else:
+#         return None
 
 
 def upload_to_s3(s3_client: Any, filename: str, key: str):
