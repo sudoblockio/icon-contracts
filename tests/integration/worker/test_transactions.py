@@ -7,5 +7,5 @@ from icon_contracts.workers.transactions import transactions_worker_tail
 #     settings.CONTRACTS_S3_AWS_ACCESS_KEY_ID = os.getenv('CONTRACTS_S3_AWS_ACCESS_KEY_ID')
 #     settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY = os.getenv('CONTRACTS_S3_AWS_SECRET_ACCESS_KEY')
 #     settings.CONTRACTS_S3_BUCKET = os.getenv('CONTRACTS_S3_BUCKET')
-#
+#     from icon_contracts import main_worker
 #     run_process_wait(transactions_worker_tail(), 10)

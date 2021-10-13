@@ -3,7 +3,7 @@ import os
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Union
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -30,17 +30,20 @@ def zip_content_to_dir(content: str, zip_name: str) -> str:
 
 
 def get_s3_client():
-    return boto3.client(
-        "s3",
-        aws_access_key_id=settings.CONTRACTS_S3_AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY,
-    )
+    if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
+        return boto3.client(
+            "s3",
+            aws_access_key_id=settings.CONTRACTS_S3_AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY,
+        )
+    else:
+        return None
 
 
-def upload_to_s3(filename: str, key: str):
-    # Create an S3 client
-    s3 = get_s3_client()
-    s3.upload_file(filename, settings.CONTRACTS_S3_BUCKET, "contract-sources/" + key)
+def upload_to_s3(s3_client: Any, filename: str, key: str):
+    # Can't share client across threads
+    # https://github.com/boto/botocore/issues/1246
+    s3_client.upload_file(filename, settings.CONTRACTS_S3_BUCKET, "contract-sources/" + key)
 
 
 def get_contract_name(address):

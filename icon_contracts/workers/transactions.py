@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from typing import Any
 
 from google.protobuf.json_format import MessageToJson
 from sqlalchemy.orm import sessionmaker
@@ -24,13 +25,13 @@ metrics = Metrics()
 
 
 class TransactionsWorker(Worker):
+    # Need to pipe this in due to bug in boto
+    s3_client: Any = None
 
+    # Metrics
     msg_count: int = 0
     contracts_created_python: int = 0
     contracts_updated_python: int = 0
-
-    def process_contract_creation(self):
-        pass
 
     def java_contract(self, content, value):
         pass
@@ -57,7 +58,7 @@ class TransactionsWorker(Worker):
                 # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
                 created_block=value.block_number,
                 created_timestamp=timestamp,
-                status="Submitted",
+                # status="Submitted",
             )
 
         # Out of order processes
@@ -71,21 +72,22 @@ class TransactionsWorker(Worker):
             self.contracts_updated_python += 1
             metrics.contracts_created_python.set(self.contracts_updated_python)
 
-            # If we have access credentials
-            if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
+            # If we have access credentials this is not None
+            # We need to share the client across threads due to botocore#1246
+            if self.s3_client:
                 # Increment the revision number
                 contract.revision_number = +1
                 zip_name = f"{contract.address}_{contract.revision_number}.zip"
                 # Unzip the contents of the dict to a directory
                 contract_path = zip_content_to_dir(content, zip_name)
                 # Upload to
-                upload_to_s3(contract_path, zip_name)
+                upload_to_s3(self.s3_client, contract_path, zip_name)
                 contract.source_code_link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/contract-sources/{zip_name}"
                 # Cleanup
                 shutil.rmtree(os.path.dirname(contract_path))
                 logger.info(f"Uploaded contract to {contract.source_code_link}")
             else:
-                logger.info(f"Skip uploading tx {value.hash}")
+                logger.info(f"Skip uploading tx")
 
             contract.name = get_contract_name(contract.address)
             contract.last_updated_block = value.block_number
@@ -105,9 +107,13 @@ class TransactionsWorker(Worker):
         # Method that classifies the contract based on ABI for IRC2 stuff
         contract.extract_contract_details()
 
+        # Produce the record so adjacent services can find out about new contracts as
+        # this is the only service that actually inspects the ABI and classifies the
+        # contracts.  So far only (10/21) `icon-addresses` is using this topic.
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             value.hash,  # Keyed on hash
+            # Convert the pydantic object to proto
             contract_to_proto(contract),
         )
 
@@ -157,10 +163,11 @@ class TransactionsWorker(Worker):
                     name=get_contract_name(address),
                     status=status,
                     owner_address=value.from_address,
-                    last_updated_block=value.block_number,
+                    # We deal with update dates based on submission due to 2.0 dropping audit
+                    # last_updated_block=value.block_number,
                     # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
-                    created_block=value.block_number,
-                    created_timestamp=int(value.timestamp, 16),
+                    # created_block=value.block_number,
+                    # created_timestamp=int(value.timestamp, 16),
                 )
             else:
                 logger.info(
@@ -222,11 +229,12 @@ class TransactionsWorker(Worker):
         #     print()
 
 
-def transactions_worker_head():
+def transactions_worker_head(s3_client):
     SessionMade = sessionmaker(bind=engine)
     session = SessionMade()
 
     kafka = TransactionsWorker(
+        s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
         consumer_group=settings.CONSUMER_GROUP_HEAD,
@@ -236,14 +244,15 @@ def transactions_worker_head():
     kafka.start()
 
 
-def transactions_worker_tail():
+def transactions_worker_tail(s3_client):
     SessionMade = sessionmaker(bind=engine)
     session = SessionMade()
 
     kafka = TransactionsWorker(
+        s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=settings.CONSUMER_GROUP_TAIL,
+        consumer_group=settings.CONSUMER_GROUP_TAIL + "5",
         auto_offset_reset="earliest",
     )
 
