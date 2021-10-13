@@ -60,6 +60,9 @@ class TransactionsWorker(Worker):
                 created_timestamp=timestamp,
                 # status="Submitted",
             )
+            # There could be a race condition here to update this record
+            self.session.add(contract)
+            self.session.commit()
 
         # Out of order processes
         # Checking last_updated_timestamp case for when we see a contract approval

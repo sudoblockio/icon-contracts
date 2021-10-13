@@ -16,19 +16,19 @@ boto3_client_lock = Lock()
 
 def get_s3_client():
     with boto3_client_lock:
-        return boto3.client(
+        return boto3.session.Session().client(
             "s3",
             aws_access_key_id=settings.CONTRACTS_S3_AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY,
         )
 
 
+s3_client = get_s3_client()
+
 logger.info("Starting metrics server.")
 
 metrics_pool = ThreadPool(1)
 metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT + 1, settings.METRICS_ADDRESS))
-
-s3_client = get_s3_client()
 
 transactions_worker_head_thread = Thread(
     target=transactions_worker_head,
@@ -40,5 +40,7 @@ transactions_worker_tail_thread = Thread(
     args=[s3_client],
 )
 
-transactions_worker_tail_thread.start()
 transactions_worker_head_thread.start()
+transactions_worker_tail_thread.start()
+transactions_worker_tail_thread.join()
+boto3_client_lock.join()
