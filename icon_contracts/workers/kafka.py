@@ -32,10 +32,10 @@ class Worker(BaseModel):
     session: Any = None
 
     kafka_server: str = settings.KAFKA_BROKER_URL
-    consumer_group: str
+    consumer_group: str = None
     auto_offset_reset: str = "earliest"
 
-    topic: str
+    topic: str = None
 
     consumer: Any = None
     json_producer: Any = None
@@ -59,6 +59,7 @@ class Worker(BaseModel):
                 "value.deserializer": ProtobufDeserializer(TransactionRaw),
                 # Offset determined by worker type head (latest) or tail (earliest)
                 "auto.offset.reset": self.auto_offset_reset,
+                # 'debug': 'broker, cgrp',
             }
         )
 
@@ -83,7 +84,8 @@ class Worker(BaseModel):
         admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
         topics = admin_client.list_topics().topics
 
-        if self.topic not in topics:
+        if self.topic and self.topic not in topics:
+            # Used as bare producer as well
             raise RuntimeError(f"Topic {self.topic} not in {topics}")
 
         self.init()
@@ -104,7 +106,7 @@ class Worker(BaseModel):
             self.protobuf_producer.poll(0)
         except BufferError:
             self.protobuf_producer.poll(1)
-            self.protobuf_producer.produce_json(topic=topic, value=value, key=key)
+            self.protobuf_producer.produce(topic=topic, value=value, key=key)
         self.protobuf_producer.flush()
 
     def start(self):

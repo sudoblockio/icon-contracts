@@ -61,7 +61,7 @@ class TransactionsWorker(Worker):
                 # status="Submitted",
             )
             # There could be a race condition here to update this record
-            self.session.add(contract)
+            self.session.merge(contract)
             self.session.commit()
 
         # Out of order processes
@@ -78,6 +78,7 @@ class TransactionsWorker(Worker):
             # If we have access credentials this is not None
             # We need to share the client across threads due to botocore#1246
             if self.s3_client:
+
                 # Increment the revision number
                 contract.revision_number = +1
                 zip_name = f"{contract.address}_{contract.revision_number}"
@@ -121,7 +122,7 @@ class TransactionsWorker(Worker):
         )
 
         # Commit the contract
-        self.session.add(contract)
+        self.session.merge(contract)
         self.session.commit()
 
     def process_audit(self, value: TransactionRaw):
@@ -187,7 +188,7 @@ class TransactionsWorker(Worker):
                 contract_to_proto(contract),
             )
 
-            self.session.add(contract)
+            self.session.merge(contract)
             self.session.commit()
 
     def process(self, msg):
@@ -232,6 +233,9 @@ class TransactionsWorker(Worker):
         #     print()
 
 
+debug = "1"
+
+
 def transactions_worker_head():
     SessionMade = sessionmaker(bind=engine)
     session = SessionMade()
@@ -240,7 +244,7 @@ def transactions_worker_head():
         # s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=settings.CONSUMER_GROUP_HEAD,
+        consumer_group=settings.CONSUMER_GROUP_HEAD + debug,
         auto_offset_reset="latest",
     )
 
@@ -255,7 +259,7 @@ def transactions_worker_tail(s3_client):
         s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=settings.CONSUMER_GROUP_TAIL,
+        consumer_group=settings.CONSUMER_GROUP_TAIL + debug,
         auto_offset_reset="earliest",
     )
 
@@ -263,5 +267,5 @@ def transactions_worker_tail(s3_client):
 
 
 if __name__ == "__main__":
-    # transactions_worker_head()
-    transactions_worker_tail()
+    transactions_worker_head()
+    # transactions_worker_tail()
