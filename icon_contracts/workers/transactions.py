@@ -207,11 +207,11 @@ class TransactionsWorker(Worker):
             return
 
         # Messages are keyed by to_address
-        if msg.key() == settings.one_address:
+        if settings.one_address == msg.headers()[1][1]:
             logger.info(f"Handling contract audit hash {value.hash}.")
             self.process_audit(value)
 
-        if msg.key() == settings._governance_address:
+        if settings._governance_address == msg.headers()[1][1]:
 
             data = json.loads(value.data)
 
@@ -233,7 +233,7 @@ class TransactionsWorker(Worker):
         #     print()
 
 
-debug = "1"
+debug = ""
 
 
 def transactions_worker_head():
