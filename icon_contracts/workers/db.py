@@ -1,4 +1,5 @@
 from loguru import logger
+from sqlalchemy.orm import sessionmaker
 from sqlmodel import create_engine
 
 from icon_contracts.config import settings
@@ -18,3 +19,4 @@ logger.info(
 )
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
+session_factory = sessionmaker(bind=engine)

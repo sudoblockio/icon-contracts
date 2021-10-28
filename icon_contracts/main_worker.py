@@ -1,11 +1,14 @@
+from contextlib import ExitStack
 from multiprocessing.pool import ThreadPool
 from threading import Lock, Thread
 
 import boto3
 from prometheus_client import start_http_server
+from sqlalchemy.orm import scoped_session
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
+from icon_contracts.workers.db import session_factory
 from icon_contracts.workers.transactions import (
     transactions_worker_head,
     transactions_worker_tail,
@@ -30,17 +33,20 @@ logger.info("Starting metrics server.")
 metrics_pool = ThreadPool(1)
 metrics_pool.apply_async(start_http_server, (settings.METRICS_PORT + 1, settings.METRICS_ADDRESS))
 
-transactions_worker_head_thread = Thread(
-    target=transactions_worker_head,
-    args=[],
-)
 
-transactions_worker_tail_thread = Thread(
-    target=transactions_worker_tail,
-    args=[s3_client],
-)
+with ExitStack() as stack:
+    Session = scoped_session(session_factory)
 
-transactions_worker_head_thread.start()
-transactions_worker_tail_thread.start()
-transactions_worker_head_thread.join()
-transactions_worker_tail_thread.join()
+    transactions_worker_head_session = Session()
+    transactions_worker_head_thread = Thread(
+        target=transactions_worker_head,
+        args=(transactions_worker_head_session,),
+    )
+    transactions_worker_head_thread.start()
+
+    transactions_worker_tail_session = Session()
+    transactions_worker_tail_thread = Thread(
+        target=transactions_worker_tail,
+        args=(transactions_worker_tail_session, s3_client),
+    )
+    transactions_worker_tail_thread.start()

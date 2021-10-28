@@ -123,7 +123,14 @@ class TransactionsWorker(Worker):
 
         # Commit the contract
         self.session.merge(contract)
-        self.session.commit()
+        try:
+            self.session.commit()
+            self.session.refresh(contract)
+        except:
+            self.session.rollback()
+            raise
+        finally:
+            self.session.close()
 
     def process_audit(self, value: TransactionRaw):
         data = json.loads(value.data)
@@ -189,7 +196,14 @@ class TransactionsWorker(Worker):
             )
 
             self.session.merge(contract)
-            self.session.commit()
+            try:
+                self.session.commit()
+                self.session.refresh(contract)
+            except:
+                self.session.rollback()
+                raise
+            finally:
+                self.session.close()
 
     def process(self, msg):
         value = msg.value()
@@ -236,9 +250,9 @@ class TransactionsWorker(Worker):
 debug = ""
 
 
-def transactions_worker_head():
-    SessionMade = sessionmaker(bind=engine)
-    session = SessionMade()
+def transactions_worker_head(session):
+    # SessionMade = sessionmaker(bind=engine)
+    # session = SessionMade()
 
     kafka = TransactionsWorker(
         # s3_client=s3_client,
@@ -251,9 +265,9 @@ def transactions_worker_head():
     kafka.start()
 
 
-def transactions_worker_tail(s3_client):
-    SessionMade = sessionmaker(bind=engine)
-    session = SessionMade()
+def transactions_worker_tail(session, s3_client):
+    # SessionMade = sessionmaker(bind=engine)
+    # session = SessionMade()
 
     kafka = TransactionsWorker(
         s3_client=s3_client,
