@@ -6,6 +6,7 @@ name: release
 
 on:
   release:
+    types: [created]
     tags:
       - "v*.*.*"
 
@@ -15,11 +16,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Tag name
-        id: source
-        run: |
-          echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
       - name: Install deps
         run: |
@@ -38,8 +34,13 @@ jobs:
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./.coverage
+          files: ./coverage.xml
           fail_ci_if_error: true
+
+      - name: Tag name
+        id: source
+        run: |
+          echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -51,11 +52,6 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr-worker
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Tag name
-        id: source
-        run: |
-          echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
       - name: Worker - Build, tag, and push image to Amazon ECR
         env:
@@ -81,9 +77,9 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
           ECR_REPOSITORY: icon-contracts-api
-          IMAGE_TAG: ${{ steps.source.outputs.TAG }}
+          IMAGE_TAG: ${{ github.run_number }}
         run: |
-          docker build --target prod --build-arg SERVICE_NAME=api -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --target prod  --build-arg SERVICE_NAME=api -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Login to DockerHub
@@ -92,31 +88,49 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and push
+      - name: Build and push (API) - latest
         uses: docker/build-push-action@v2
         with:
           context: .
-          build-args:
-            - SERVICE_NAME=api
+          build-args: |
+            SERVICE_NAME=api
           file: ./Dockerfile
           target: prod
           push: true
-          tags: |
-            geometrylabs/icon-contracts-api:latest
-            geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}
+          tags: geometrylabs/icon-contracts-api:latest
 
-      - name: Build and push
+      - name: Build and push (API)
         uses: docker/build-push-action@v2
         with:
           context: .
-          build-args:
-            - SERVICE_NAME=worker
+          build-args: |
+            SERVICE_NAME=api
           file: ./Dockerfile
           target: prod
           push: true
-          tags: |
-            geometrylabs/icon-contracts-worker:latest
-            geometrylabs/icon-contracts-worker:${{ steps.source.outputs.TAG }}
+          tags: geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}
+
+      - name: Build and push (WORKER) - latest
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args: |
+            SERVICE_NAME=api
+          file: ./Dockerfile
+          target: prod
+          push: true
+          tags: geometrylabs/icon-contracts-api:latest
+
+      - name: Build and push (WORKER)
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          build-args: |
+            SERVICE_NAME=api
+          file: ./Dockerfile
+          target: prod
+          push: true
+          tags: geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}
 
       - name: Checkout charts repo
         uses: actions/checkout@v2
@@ -131,9 +145,9 @@ jobs:
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod/mainnet/contracts/values.yaml'
+          valueFile: 'deployments/prod-us-west-2/mainnet/contracts/values.yaml'
           propertyPath: 'api.image.tag'
-          value: ${{ github.run_number }}
+          value: ${{ steps.source.outputs.TAG }}
           branch: main
           createPR: 'false'
           updateFile: true
@@ -144,9 +158,9 @@ jobs:
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod/mainnet/contracts/values.yaml'
+          valueFile: 'deployments/prod-us-west-2/mainnet/contracts/values.yaml'
           propertyPath: 'worker.image.tag'
-          value: ${{ github.run_number }}
+          value: ${{ steps.source.outputs.TAG }}
           branch: main
           createPR: 'false'
           message: 'contracts prod deployment (mainnet) image versions to ${{ github.run_number }}'
