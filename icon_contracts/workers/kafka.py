@@ -59,7 +59,7 @@ class Worker(BaseModel):
                 "value.deserializer": ProtobufDeserializer(TransactionRaw),
                 # Offset determined by worker type head (latest) or tail (earliest)
                 "auto.offset.reset": self.auto_offset_reset,
-                "debug": "broker,cgrp",
+                # "debug": "broker,cgrp",
             }
         )
 
