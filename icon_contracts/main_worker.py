@@ -48,21 +48,23 @@ consumer_group, partition_dict = get_current_offset(job_init_session)
 with ExitStack() as stack:
     Session = scoped_session(session_factory)
 
-    transactions_worker_head_session = Session()
-    transactions_worker_head_thread = Thread(
-        target=transactions_worker_head,
-        args=(
-            transactions_worker_head_session,
-            s3_client,
-            consumer_group,
-        ),
-    )
-    transactions_worker_head_thread.start()
+    if partition_dict is None:
+        # Partition dict is only available if the worker is run as a kubernetes job
+        # Backfilling in other run environments not supported atm.
+        transactions_worker_head_session = Session()
+        transactions_worker_head_thread = Thread(
+            target=transactions_worker_head,
+            args=(
+                transactions_worker_head_session,
+                s3_client,
+                consumer_group,
+            ),
+        )
+        transactions_worker_head_thread.start()
 
-    if partition_dict is not None:
-        # Partition list will be None when it is not supplied by the `kafka_jobs`
-        # table which should exist in the DB and populated by an init container before
-        # the service initializes.
+    else:
+        # Partition list is supplied by the `kafka_jobs` table which should exist in
+        # the DB and populated by an init container before the service initializes.
         transactions_worker_tail_session = Session()
         transactions_worker_tail_thread = Thread(
             target=transactions_worker_tail,
