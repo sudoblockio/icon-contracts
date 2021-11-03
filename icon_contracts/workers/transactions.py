@@ -28,6 +28,8 @@ class TransactionsWorker(Worker):
     # Need to pipe this in due to bug in boto
     s3_client: Any = None
 
+    partition_dict: dict = None
+
     # Metrics
     msg_count: int = 0
     contracts_created_python: int = 0
@@ -76,7 +78,6 @@ class TransactionsWorker(Worker):
             metrics.contracts_created_python.set(self.contracts_updated_python)
 
             # If we have access credentials this is not None
-            # We need to share the client across threads due to botocore#1246
             if self.s3_client:
 
                 # Increment the revision number
@@ -208,7 +209,22 @@ class TransactionsWorker(Worker):
     def process(self, msg):
         value = msg.value()
 
-        if self.msg_count % 10000 == 0:
+        if self.partition_dict is not None:
+            if self.msg_count % 100 == 0:
+                end_offset = self.partition_dict[(self.topic, msg.partition())]
+                offset = [
+                    i.offset
+                    for i in self.get_offset_per_partition()
+                    if i.partition == msg.partition() and i.topic == self.topic
+                ][0]
+
+                logger.info(f"offset={offset} and end={end_offset}")
+
+                if offset > end_offset:
+                    logger.info(f"Reached end of job at offset={offset} and end={end_offset}")
+                    return
+
+        if self.msg_count % 100000 == 0:
             logger.info(
                 f"msg count {self.msg_count} and block {value.block_number} "
                 f"for consumer group {self.consumer_group}"
@@ -250,30 +266,25 @@ class TransactionsWorker(Worker):
 debug = ""
 
 
-def transactions_worker_head(session):
-    # SessionMade = sessionmaker(bind=engine)
-    # session = SessionMade()
-
+def transactions_worker_head(session, s3_client, consumer_group=settings.CONSUMER_GROUP):
     kafka = TransactionsWorker(
-        # s3_client=s3_client,
+        s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=settings.CONSUMER_GROUP_HEAD + debug,
+        consumer_group=consumer_group + "-head",
         auto_offset_reset="latest",
     )
 
     kafka.start()
 
 
-def transactions_worker_tail(session, s3_client):
-    # SessionMade = sessionmaker(bind=engine)
-    # session = SessionMade()
-
+def transactions_worker_tail(session, s3_client, consumer_group, partition_dict):
     kafka = TransactionsWorker(
+        partition_dict=partition_dict,
         s3_client=s3_client,
         session=session,
         topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=settings.CONSUMER_GROUP_TAIL + debug,
+        consumer_group=consumer_group,
         auto_offset_reset="earliest",
     )
 
