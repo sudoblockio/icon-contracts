@@ -14,19 +14,19 @@ PARTITION_DICT_FIXTURE = {("transactions", 0): 10000}
 #     from icon_contracts import main_worker
 
 
-def test_transactions_worker(db, run_process_wait):
-    topic_name = "transactions"
-    with db as session:
-        kafka = TransactionsWorker(
-            partition_dict=PARTITION_DICT_FIXTURE,
-            s3_client=None,
-            session=session,
-            topic=topic_name,
-            consumer_group="foo",
-            auto_offset_reset="earliest",
-        )
-
-    run_process_wait(kafka.start, 5)
+# def test_transactions_worker(db, run_process_wait):
+#     topic_name = "transactions"
+#     with db as session:
+#         kafka = TransactionsWorker(
+#             partition_dict=PARTITION_DICT_FIXTURE,
+#             s3_client=None,
+#             session=session,
+#             topic=topic_name,
+#             consumer_group="foo",
+#             auto_offset_reset="earliest",
+#         )
+#
+#     run_process_wait(kafka.start, 5)
 
 
 # def test_get_offset_per_partition(db):
