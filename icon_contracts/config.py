@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # ICON Nodes
     ICON_NODE_URL = "https://icon.geometry-dev.net/api/v3"
-    BACKUP_ICON_NODE_URL = "http://34.218.244.40:9000/api/v3"
+    BACKUP_ICON_NODE_URL = "https://ctz.solidwallet.io/api/v3"
 
     # Kafka
     KAFKA_BROKER_URL: str = "localhost:29092"
