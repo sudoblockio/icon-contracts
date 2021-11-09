@@ -155,6 +155,7 @@ jobs:
 
       - name: Update prod-mainnet deployment values file (WORKER) and re-commit
         uses: fjogeleit/yaml-update-action@master
+        id: yaml-update
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
@@ -171,7 +172,7 @@ jobs:
         run: |
           git stash
           git pull
-          git tag -f contracts-prod-uswest2
-          git tag -f contracts-prod-euwest2
+          git tag -f contracts-prod-uswest2 ${{ steps.yaml-update.outputs.commit }}
+          git tag -f contracts-prod-euwest2 ${{ steps.yaml-update.outputs.commit }}
           git push -f origin --tags
         working-directory: charts

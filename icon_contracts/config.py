@@ -3,7 +3,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
 
-    name: str = "contracts"
+    NAME: str = "contracts"
     NETWORK_NAME: str = "mainnet"
 
     # Ports
@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     # REDIS_SENTINEL_CLIENT_MODE: bool = False
     # REDIS_SENTINEL_CLIENT_MASTER_NAME: str = "master"
 
-    _governance_address: str = "cx0000000000000000000000000000000000000000"
+    governance_address: str = "cx0000000000000000000000000000000000000000"
     one_address: str = "cx0000000000000000000000000000000000000001"
 
     class Config:

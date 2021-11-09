@@ -208,13 +208,13 @@ class TransactionsWorker(Worker):
 
     def process(self, msg):
 
-        if msg.headers()[1][1] == b"None":
-            return
-
         value = msg.value()
 
+        if value.to_address == "None":
+            return
+
         if self.partition_dict is not None:
-            if self.msg_count % 100 == 0:
+            if self.msg_count % 1000 == 0:
                 end_offset = self.partition_dict[(self.topic, msg.partition())]
                 offset = [
                     i.offset
@@ -240,12 +240,11 @@ class TransactionsWorker(Worker):
             return
 
         # Messages are keyed by to_address
-        if settings.one_address == msg.headers()[1][1].decode("utf-8"):
+        if value.to_address == settings.one_address:
             logger.info(f"Handling contract audit hash {value.hash}.")
             self.process_audit(value)
 
-        if settings._governance_address == msg.headers()[1][1].decode("utf-8"):
-
+        if value.to_address == settings.governance_address:
             data = json.loads(value.data)
 
             if "contentType" in data:
