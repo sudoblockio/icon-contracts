@@ -6,6 +6,7 @@ from confluent_kafka import (
     KafkaError,
     Producer,
     SerializingProducer,
+    TopicPartition,
 )
 from confluent_kafka.admin import AdminClient
 from confluent_kafka.schema_registry import SchemaRegistryClient
@@ -15,12 +16,39 @@ from confluent_kafka.schema_registry.protobuf import (
 )
 from confluent_kafka.serialization import StringDeserializer, StringSerializer
 from loguru import logger
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
-# from icon_contracts.log import logger
 from icon_contracts.config import settings
 from icon_contracts.schemas.contract_processed_pb2 import ContractProcessed
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
+
+
+def get_current_offset(session):
+    """
+    For backfilling only, this function works with the init container to look up
+    it's job_id so it can line that up with it's consumer group and offest so that
+    we can backfill up to a given point and then kill the worker afterwards.
+    """
+    if settings.JOB_ID is None:
+        return settings.CONSUMER_GROUP, None
+
+    output = {}
+    while True:
+        logger.info("Getting kafka job")
+        sql = f"select * from kafka_jobs WHERE job_id='{settings.JOB_ID}';"
+        result = session.execute(sql).fetchall()
+        session.commit()
+
+        if len(result) == 0:
+            logger.info(f"Did not find job_id={settings.JOB_ID} - sleeping")
+            sleep(2)
+            continue
+
+        for r in result:
+            # Keyed on tuple of topic, partition to look up the stop_offset
+            output[(r[2], r[3])] = r[4]
+
+        return r[1], output
 
 
 class Worker(BaseModel):
@@ -143,6 +171,15 @@ class Worker(BaseModel):
 
         # Flush the last of the messages
         self.json_producer.flush()
+
+    def get_offset_per_partition(self):
+        topic = self.consumer.list_topics(topic=self.topic)
+        partitions = [
+            TopicPartition(self.topic, partition)
+            for partition in list(topic.topics[self.topic].partitions.keys())
+        ]
+
+        return self.consumer.position(partitions)
 
     def init(self):
         """Overridable process that runs on init."""

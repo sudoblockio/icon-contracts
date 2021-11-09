@@ -14,10 +14,24 @@ def test_icx_getScoreApi():
     assert isinstance(result, list)
     assert len(result) > 3
     out = icx_getScoreApi("cx63ed3c0cb33307f5477b4f014553df3cf511544c")
-    assert out.status_code == 400
-    out = icx_getScoreApi("cx9ab3078e72c8d9017194d17b34b1a47b661945ca")
+
+    t = out.json()
+    # assert out.status_code == 400
+    out = icx_getScoreApi("cx56d39e0ad2502504c1e3d1bb8d633e20997554c4")
     assert out.status_code == 200
     assert isinstance(out.json()["result"], list)
+    t = out.json()
+
+    print()
+
+
+def test_icx_call():
+    result = icx_call("cxf61cd5a45dc9f91c15aa65831a30a90d59a09619", {"method": "name"}).json()[
+        "result"
+    ]
+    # assert isinstance(result, list)
+    # assert len(result) > 3
+    assert result == "Balance Token"
 
 
 def test_icx_call():

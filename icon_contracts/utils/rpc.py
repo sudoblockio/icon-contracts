@@ -51,3 +51,18 @@ def icx_call(address: str, data: dict):
         },
     }
     return post_rpc(payload)
+
+
+def icx_getBlockByHeight():
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "icx_getBlockByHeight",
+        "params": {"height": "0x3"},
+    }
+    return post_rpc(payload)
+
+
+# if __name__ == '__main__':
+#     x = icx_getBlockByHeight().json()
+#     print(x)

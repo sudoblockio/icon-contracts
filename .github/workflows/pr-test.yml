@@ -15,34 +15,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          install: true
-
-      - name: Bring up DBs
-        run: docker-compose -f docker-compose.db.yml up -d
-
-      - name: Run unit tests
-        run: cd src && go test -v -covermode=atomic -coverprofile=coverage.out ./...
-
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.out
-          flags: unit
-          fail_ci_if_error: true
+      - name: Install deps
+        run: |
+          pip3 install -r requirements_api.txt -r requirements_worker.txt -r requirements_dev.txt
+          pip3 install --upgrade protobuf
 
       - name: Bring up stack
-        run: make up
+        run: make up-dbs && sleep 30
 
-      - name: Run integration tests
-        run: cd tests && go test -v -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Check stack
+        run: make ps
+
+      - name: Run tests with coverage
+        run: make test-coverage
 
       - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.out
-          flags: integration
+          files: ./coverage.xml
           fail_ci_if_error: true

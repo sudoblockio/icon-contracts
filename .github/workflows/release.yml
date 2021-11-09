@@ -163,7 +163,7 @@ jobs:
           value: ${{ steps.source.outputs.TAG }}
           branch: main
           createPR: 'false'
-          message: 'contracts prod deployment (mainnet) image versions to ${{ github.run_number }}'
+          message: 'contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}'
           token: ${{ secrets.ICON_CHARTS_PAT }}
           updateFile: true
 
