@@ -207,6 +207,10 @@ class TransactionsWorker(Worker):
                 self.session.close()
 
     def process(self, msg):
+
+        if msg.headers()[1][1] == b"None":
+            return
+
         value = msg.value()
 
         if self.partition_dict is not None:
@@ -229,7 +233,6 @@ class TransactionsWorker(Worker):
                 f"msg count {self.msg_count} and block {value.block_number} "
                 f"for consumer group {self.consumer_group}"
             )
-            metrics.block_height.set(value.block_number)
         self.msg_count += 1
 
         # Pass on any invalid Tx in this service
@@ -237,11 +240,11 @@ class TransactionsWorker(Worker):
             return
 
         # Messages are keyed by to_address
-        if settings.one_address == msg.headers()[1][1]:
+        if settings.one_address == msg.headers()[1][1].decode("utf-8"):
             logger.info(f"Handling contract audit hash {value.hash}.")
             self.process_audit(value)
 
-        if settings._governance_address == msg.headers()[1][1]:
+        if settings._governance_address == msg.headers()[1][1].decode("utf-8"):
 
             data = json.loads(value.data)
 
@@ -261,9 +264,6 @@ class TransactionsWorker(Worker):
         #
         # if method in 'removeAuditor':
         #     print()
-
-
-debug = ""
 
 
 def transactions_worker_head(session, s3_client, consumer_group=settings.CONSUMER_GROUP):
@@ -289,8 +289,3 @@ def transactions_worker_tail(session, s3_client, consumer_group, partition_dict)
     )
 
     kafka.start()
-
-
-if __name__ == "__main__":
-    transactions_worker_head()
-    # transactions_worker_tail()

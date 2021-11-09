@@ -37,6 +37,7 @@ def get_current_offset(session):
         logger.info("Getting kafka job")
         sql = f"select * from kafka_jobs WHERE job_id='{settings.JOB_ID}';"
         result = session.execute(sql).fetchall()
+        session.commit()
 
         if len(result) == 0:
             logger.info(f"Did not find job_id={settings.JOB_ID} - sleeping")
