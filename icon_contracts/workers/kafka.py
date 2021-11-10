@@ -34,7 +34,7 @@ def get_current_offset(session):
 
     output = {}
     while True:
-        logger.info("Getting kafka job")
+        logger.info(f"Getting kafka job with job_id = {settings.JOB_ID}")
         sql = f"select * from kafka_jobs WHERE job_id='{settings.JOB_ID}';"
         result = session.execute(sql).fetchall()
         session.commit()
@@ -139,7 +139,7 @@ class Worker(BaseModel):
 
     def start(self):
         self.consumer.subscribe([self.topic])
-        logger.info("Kafka consumer connected...")
+        logger.info(f"Kafka consumer connected to consumer group = {settings.CONSUMER_GROUP}...")
 
         while True:
             # Poll for a message

@@ -49,6 +49,7 @@ with ExitStack() as stack:
     Session = scoped_session(session_factory)
 
     if partition_dict is None:
+        logger.info("Worker is a head worker...")
         # Partition dict is only available if the worker is run as a kubernetes job
         # Backfilling in other run environments not supported atm.
         transactions_worker_head_session = Session()
@@ -63,6 +64,7 @@ with ExitStack() as stack:
         transactions_worker_head_thread.start()
 
     else:
+        logger.info("Worker is a backfill worker...")
         # Partition list is supplied by the `kafka_jobs` table which should exist in
         # the DB and populated by an init container before the service initializes.
         transactions_worker_tail_session = Session()

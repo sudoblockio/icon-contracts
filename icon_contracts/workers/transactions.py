@@ -196,7 +196,7 @@ class TransactionsWorker(Worker):
                 contract_to_proto(contract),
             )
 
-            self.session.merge(contract)
+            self.session.add(contract)
             try:
                 self.session.commit()
                 self.session.refresh(contract)
