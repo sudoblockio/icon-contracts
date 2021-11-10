@@ -226,7 +226,10 @@ class TransactionsWorker(Worker):
 
                 if offset > end_offset:
                     logger.info(f"Reached end of job at offset={offset} and end={end_offset}")
-                    return
+                    import sys
+
+                    logger.info("Exiting.")
+                    sys.exit(0)
 
         if self.msg_count % 100000 == 0:
             logger.info(
