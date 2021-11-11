@@ -130,8 +130,8 @@ class TransactionsWorker(Worker):
         except:
             self.session.rollback()
             raise
-        finally:
-            self.session.close()
+        # finally:
+        #     self.session.close()
 
     def process_audit(self, value: TransactionRaw):
         data = json.loads(value.data)
@@ -203,8 +203,8 @@ class TransactionsWorker(Worker):
             except:
                 self.session.rollback()
                 raise
-            finally:
-                self.session.close()
+            # finally:
+            #     self.session.close()
 
     def process(self, msg):
 
