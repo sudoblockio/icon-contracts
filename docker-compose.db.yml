@@ -5,7 +5,8 @@ services:
     image: geometrylabs/iconetl:${ICON_ETL_TAG:-latest}
     command: [
       "stream",
-       "-s", "${START_BLOCK:-41747733}",
+#       "-s", "${START_BLOCK:-29822968}",
+       "-s", "${START_BLOCK:-29881851}",
       "-o", "kafka:9092",
       "--period-seconds", "1",
       "--provider-uri", "https://icon.geometry-dev.net/api/v3",

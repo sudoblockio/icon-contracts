@@ -14,11 +14,12 @@ from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import (
     get_contract_name,
+    get_s3_client,
     upload_to_s3,
     zip_content_to_dir,
 )
 from icon_contracts.utils.rpc import icx_call, icx_getTransactionResult
-from icon_contracts.workers.db import engine
+from icon_contracts.workers.db import engine, session_factory
 from icon_contracts.workers.kafka import Worker
 
 metrics = Metrics()
@@ -64,7 +65,12 @@ class TransactionsWorker(Worker):
             )
             # There could be a race condition here to update this record
             self.session.merge(contract)
-            self.session.commit()
+            try:
+                self.session.commit()
+                self.session.refresh(contract)
+            except:
+                self.session.rollback()
+                raise
 
         # Out of order processes
         # Checking last_updated_timestamp case for when we see a contract approval
@@ -196,15 +202,8 @@ class TransactionsWorker(Worker):
                 contract_to_proto(contract),
             )
 
-            self.session.add(contract)
-            try:
-                self.session.commit()
-                self.session.refresh(contract)
-            except:
-                self.session.rollback()
-                raise
-            # finally:
-            #     self.session.close()
+            self.session.merge(contract)
+            self.session.commit()
 
     def process(self, msg):
 
@@ -247,17 +246,17 @@ class TransactionsWorker(Worker):
             logger.info(f"Handling contract audit hash {value.hash}.")
             self.process_audit(value)
 
-        if value.to_address == settings.governance_address:
+        # if value.to_address == settings.governance_address:
+        if value.data.startswith('{"contentType": "application/'):
             data = json.loads(value.data)
 
-            if "contentType" in data:
-                if data["contentType"] == "application/zip":
-                    logger.info(f"Handling python contract creation hash {value.hash}.")
-                    self.python_contract(data["content"], value)
+            if data["contentType"] == "application/zip":
+                logger.info(f"Handling python contract creation hash {value.hash}.")
+                self.python_contract(data["content"], value)
 
-                if data["contentType"] == "application/java":
-                    logger.info(f"Handling java contract creation hash {value.hash}.")
-                    self.java_contract(data["content"], value)
+            if data["contentType"] == "application/java":
+                logger.info(f"Handling java contract creation hash {value.hash}.")
+                self.java_contract(data["content"], value)
 
             return
 
@@ -268,26 +267,29 @@ class TransactionsWorker(Worker):
         #     print()
 
 
-def transactions_worker_head(session, s3_client, consumer_group=settings.CONSUMER_GROUP):
-    kafka = TransactionsWorker(
-        s3_client=s3_client,
-        session=session,
-        topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=consumer_group + "-head",
-        auto_offset_reset="latest",
-    )
+def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
 
-    kafka.start()
+    with session_factory() as session:
+        kafka = TransactionsWorker(
+            s3_client=get_s3_client(),
+            session=session,
+            topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
+            consumer_group=consumer_group + "-head",
+            auto_offset_reset="latest",
+        )
+        kafka.start()
 
 
-def transactions_worker_tail(session, s3_client, consumer_group, partition_dict):
-    kafka = TransactionsWorker(
-        partition_dict=partition_dict,
-        s3_client=s3_client,
-        session=session,
-        topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
-        consumer_group=consumer_group,
-        auto_offset_reset="earliest",
-    )
+def transactions_worker_tail(consumer_group, partition_dict):
 
-    kafka.start()
+    with session_factory() as session:
+
+        kafka = TransactionsWorker(
+            partition_dict=partition_dict,
+            s3_client=get_s3_client(),
+            session=session,
+            topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
+            consumer_group=consumer_group,
+            auto_offset_reset="earliest",
+        )
+        kafka.start()

@@ -66,9 +66,10 @@ services:
       args:
         - SERVICE_NAME=api
     ports:
-      - "8000:8000"     # API
-      - "8180:8180"     # Health
-      - "9400:9400"     # Prometheus
+      - "8000:8000"
+    expose:
+      - "9400"
+      - "8180"
     security_opt:
       - "seccomp:unconfined"
     cap_add:
