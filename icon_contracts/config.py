@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     SCHEMA_REGISTRY_URL: str = "http://localhost:8081"
 
     # KAFKA_GROUP_ID: str = "contracts"
-    IS_TAIL_WORKER: bool = False
+    CONSUMER_IS_TAIL: bool = False
     JOB_ID: str = None
     CONSUMER_GROUP: str = "contracts"
 

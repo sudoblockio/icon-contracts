@@ -13,7 +13,7 @@ logger.info("Starting metrics server.")
 
 start_http_server(settings.METRICS_PORT, settings.METRICS_ADDRESS)
 
-if not settings.IS_TAIL_WORKER:
+if not settings.CONSUMER_IS_TAIL:
     logger.info("Worker is a head worker...")
     transactions_worker_head(
         consumer_group=settings.CONSUMER_GROUP,
