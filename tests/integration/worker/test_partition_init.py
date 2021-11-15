@@ -43,7 +43,7 @@ def test_get_current_offset(db, backfill_job):
 
 
 # def test_transactions_worker_tail(db, backfill_job):
-#     settings.JOB_ID = 'test4'
+#     settings.JOB_ID = 'test1'
 #     backfill_job(settings.JOB_ID)
 #
 #     with db as session:

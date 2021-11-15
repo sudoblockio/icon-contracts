@@ -1,8 +1,10 @@
+from http import HTTPStatus
 from typing import List
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from starlette.responses import Response
 
 from icon_contracts.api.db import get_session
 from icon_contracts.models.contracts import Contract
@@ -45,10 +47,14 @@ async def get_contracts(
 
 
 @router.get("/contracts/{address}")
-async def get_contracts(
+async def get_contract(
     address: str, session: AsyncSession = Depends(get_session)
 ) -> List[Contract]:
     """Return list of contracts"""
     result = await session.execute(select(Contract).where(Contract.address == address))
     contracts = result.scalars().all()
-    return contracts
+
+    if len(contracts) == 0:
+        return Response(status_code=HTTPStatus.NO_CONTENT.value)
+
+    return contracts[0]

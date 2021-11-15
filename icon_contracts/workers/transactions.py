@@ -243,9 +243,8 @@ class TransactionsWorker(Worker):
         if value.receipt_status != 1:
             return
 
-        # Messages are keyed by to_address
+        # Handle audit process
         if value.to_address == settings.one_address:
-            logger.info(f"Handling contract audit hash {value.hash}.")
             self.process_audit(value)
 
         # if value.to_address == settings.governance_address:
