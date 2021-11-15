@@ -167,7 +167,6 @@ class Worker(BaseModel):
                 continue
             else:
                 self.process(msg)
-                self.consumer.commit()
 
         # Flush the last of the messages
         self.json_producer.flush()
