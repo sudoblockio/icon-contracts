@@ -65,12 +65,13 @@ class TransactionsWorker(Worker):
             )
             # There could be a race condition here to update this record
             self.session.merge(contract)
-            try:
-                self.session.commit()
-                self.session.refresh(contract)
-            except:
-                self.session.rollback()
-                raise
+            self.session.commit()
+            # try:
+            #     self.session.commit()
+            #     self.session.refresh(contract)
+            # except:
+            #     self.session.rollback()
+            #     raise
 
         # Out of order processes
         # Checking last_updated_timestamp case for when we see a contract approval
@@ -130,12 +131,13 @@ class TransactionsWorker(Worker):
 
         # Commit the contract
         self.session.merge(contract)
-        try:
-            self.session.commit()
-            self.session.refresh(contract)
-        except:
-            self.session.rollback()
-            raise
+        self.session.commit()
+        # try:
+        #     self.session.commit()
+        #     self.session.refresh(contract)
+        # except:
+        #     self.session.rollback()
+        #     raise
         # finally:
         #     self.session.close()
 
