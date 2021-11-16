@@ -30,8 +30,9 @@ class Contract(SQLModel, table=True):
     last_updated_timestamp: Optional[int] = Field(None, sa_column=Column(BIGINT), index=True)
     created_block: Optional[int] = Field(None, index=True)
     created_timestamp: Optional[int] = Field(None, sa_column=Column(BIGINT), index=True)
+    creation_hash: Optional[str] = Field(None, index=False)
 
-    owner_address: Optional[str] = Field(None, index=True)
+    owner_address: Optional[str] = Field(None, index=False)
 
     current_version: Optional[str] = Field(None, index=False)
 

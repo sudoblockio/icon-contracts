@@ -61,7 +61,7 @@ class TransactionsWorker(Worker):
                 # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
                 created_block=value.block_number,
                 created_timestamp=timestamp,
-                # status="Submitted",
+                creation_hash=value.hash,
             )
             # There could be a race condition here to update this record
             self.session.merge(contract)
@@ -115,6 +115,7 @@ class TransactionsWorker(Worker):
             )
             contract.created_block = value.block_number
             contract.created_timestamp = timestamp
+            contract.creation_hash = value.hash
 
         # Method that classifies the contract based on ABI for IRC2 stuff
         contract.extract_contract_details()
@@ -185,9 +186,6 @@ class TransactionsWorker(Worker):
                     owner_address=value.from_address,
                     # We deal with update dates based on submission due to 2.0 dropping audit
                     last_updated_block=0,
-                    # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
-                    # created_block=value.block_number,
-                    # created_timestamp=int(value.timestamp, 16),
                 )
             else:
                 logger.info(
