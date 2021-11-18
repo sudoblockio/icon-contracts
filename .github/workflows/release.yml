@@ -168,11 +168,22 @@ jobs:
           token: ${{ secrets.ICON_CHARTS_PAT }}
           updateFile: true
 
+      - name: Configure credentials
+        uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.ICON_CHARTS_PAT }}'
+          global: true
+
+      - name: Commit all updates
+        run: |
+          git add -A
+          git commit -m "contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}"
+          git push origin
+        working-directory: charts
+
       - name: Push tags
         run: |
-          git stash
-          git pull
-          git tag -f contracts-prod-uswest2 ${{ steps.yaml-update.outputs.commit }}
-          git tag -f contracts-prod-euwest2 ${{ steps.yaml-update.outputs.commit }}
+          git tag -f contracts-prod-uswest2
+          git tag -f contracts-prod-euwest2
           git push -f origin --tags
         working-directory: charts
