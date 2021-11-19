@@ -140,7 +140,36 @@ jobs:
           path: charts
           token: ${{ secrets.ICON_CHARTS_PAT }}
 
-      - name: Update prod-mainnet deployment values file (API) and re-commit
+      - name: Update prod-sejong deployment values file (API) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-us-west-2/sejong/contracts/values.yaml'
+          propertyPath: 'api.image.tag'
+          value: prod-${{ steps.source.outputs.TAG }}
+          branch: main
+          createPR: 'false'
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-sejong deployment values file (WORKER) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        id: yaml-update
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-us-west-2/sejong/contracts/values.yaml'
+          propertyPath: 'worker.image.tag'
+          value: prod-${{ steps.source.outputs.TAG }}
+          branch: main
+          createPR: 'false'
+          message: 'contracts prod deployment (sejong) image versions to ${{ steps.source.outputs.TAG }}'
+          token: ${{ secrets.ICON_CHARTS_PAT }}
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-mainnet-us deployment values file (API) and re-commit
         uses: fjogeleit/yaml-update-action@master
         with:
           workDir: charts
@@ -153,7 +182,7 @@ jobs:
           updateFile: true
           commitChange: false
 
-      - name: Update prod-mainnet deployment values file (WORKER) and re-commit
+      - name: Update prod-mainnet-us deployment values file (WORKER) and re-commit
         uses: fjogeleit/yaml-update-action@master
         id: yaml-update
         with:
@@ -167,6 +196,36 @@ jobs:
           message: 'contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}'
           token: ${{ secrets.ICON_CHARTS_PAT }}
           updateFile: true
+          commitChange: false
+
+      - name: Update prod-mainnet-eu deployment values file (API) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-eu-west-1/mainnet/contracts/values.yaml'
+          propertyPath: 'api.image.tag'
+          value: prod-${{ steps.source.outputs.TAG }}
+          branch: main
+          createPR: 'false'
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-mainnet-eu deployment values file (WORKER) and re-commit
+        uses: fjogeleit/yaml-update-action@master
+        id: yaml-update
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-eu-west-1/mainnet/contracts/values.yaml'
+          propertyPath: 'worker.image.tag'
+          value: prod-${{ steps.source.outputs.TAG }}
+          branch: main
+          createPR: 'false'
+          message: 'contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}'
+          token: ${{ secrets.ICON_CHARTS_PAT }}
+          updateFile: true
+          commitChange: false
 
       - name: Configure credentials
         uses: oleksiyrudenko/gha-git-credentials@v2-latest
