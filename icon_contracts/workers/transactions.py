@@ -4,7 +4,6 @@ import shutil
 from typing import Any
 
 from google.protobuf.json_format import MessageToJson
-from sqlalchemy.orm import sessionmaker
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
@@ -18,8 +17,8 @@ from icon_contracts.utils.contract_content import (
     upload_to_s3,
     zip_content_to_dir,
 )
-from icon_contracts.utils.rpc import icx_call, icx_getTransactionResult
-from icon_contracts.workers.db import engine, session_factory
+from icon_contracts.utils.rpc import icx_getTransactionResult
+from icon_contracts.workers.db import session_factory
 from icon_contracts.workers.kafka import Worker
 
 metrics = Metrics()
@@ -63,15 +62,8 @@ class TransactionsWorker(Worker):
                 created_timestamp=timestamp,
                 creation_hash=value.hash,
             )
-            # There could be a race condition here to update this record
             self.session.merge(contract)
             self.session.commit()
-            # try:
-            #     self.session.commit()
-            #     self.session.refresh(contract)
-            # except:
-            #     self.session.rollback()
-            #     raise
 
         # Out of order processes
         # Checking last_updated_timestamp case for when we see a contract approval
@@ -133,14 +125,6 @@ class TransactionsWorker(Worker):
         # Commit the contract
         self.session.merge(contract)
         self.session.commit()
-        # try:
-        #     self.session.commit()
-        #     self.session.refresh(contract)
-        # except:
-        #     self.session.rollback()
-        #     raise
-        # finally:
-        #     self.session.close()
 
     def process_audit(self, value: TransactionRaw):
         data = json.loads(value.data)

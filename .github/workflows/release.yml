@@ -155,7 +155,6 @@ jobs:
 
       - name: Update prod-sejong deployment values file (WORKER) and re-commit
         uses: fjogeleit/yaml-update-action@master
-        id: yaml-update
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
@@ -184,7 +183,6 @@ jobs:
 
       - name: Update prod-mainnet-us deployment values file (WORKER) and re-commit
         uses: fjogeleit/yaml-update-action@master
-        id: yaml-update
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
@@ -213,7 +211,6 @@ jobs:
 
       - name: Update prod-mainnet-eu deployment values file (WORKER) and re-commit
         uses: fjogeleit/yaml-update-action@master
-        id: yaml-update
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
