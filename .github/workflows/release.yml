@@ -240,6 +240,6 @@ jobs:
       - name: Push tags
         run: |
           git tag -f contracts-prod-uswest2
-          git tag -f contracts-prod-euwest2
+          git tag -f contracts-prod-euwest1
           git push -f origin --tags
         working-directory: charts
