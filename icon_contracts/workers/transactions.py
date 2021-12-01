@@ -229,29 +229,36 @@ class TransactionsWorker(Worker):
         if value.to_address == settings.one_address:
             self.process_audit(value)
 
-        # if value.to_address == settings.governance_address:
-        if value.data.startswith('{"contentType": "application/'):
-            data = json.loads(value.data)
-
-            if data["contentType"] == "application/zip":
-                logger.info(f"Handling python contract creation hash {value.hash}.")
-                self.python_contract(data["content"], value)
-
-            if data["contentType"] == "application/java":
-                logger.info(f"Handling java contract creation hash {value.hash}.")
-                self.java_contract(data["content"], value)
-
+        # Need to check the data field if there is a json payload otherwise we are not
+        # interested in it in this context
+        if str(value.data) != "null":
+            try:
+                data = json.loads(value.data)
+            except Exception:
+                self.produce_json(
+                    topic=settings.PRODUCER_TOPIC_DLQ,
+                    key="unknown-event-content-type",
+                    value=MessageToJson(value),
+                )
+                return
+        else:
             return
 
-        # if method in 'addAuditor':
-        #     print()
-        #
-        # if method in 'removeAuditor':
-        #     print()
+        if data is not None:
+            # These are contract creation Txs
+            if "contentType" in data:
+                if data["contentType"] == "application/zip":
+                    logger.info(f"Handling python contract creation hash {value.hash}.")
+                    self.python_contract(data["content"], value)
+
+                if data["contentType"] == "application/java":
+                    logger.info(f"Handling java contract creation hash {value.hash}.")
+                    self.java_contract(data["content"], value)
+
+                return
 
 
 def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
-
     with session_factory() as session:
         kafka = TransactionsWorker(
             s3_client=get_s3_client(),
@@ -264,9 +271,7 @@ def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
 
 
 def transactions_worker_tail(consumer_group, partition_dict):
-
     with session_factory() as session:
-
         kafka = TransactionsWorker(
             partition_dict=partition_dict,
             s3_client=get_s3_client(),
