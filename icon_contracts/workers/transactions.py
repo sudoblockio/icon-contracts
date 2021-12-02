@@ -99,7 +99,7 @@ class TransactionsWorker(Worker):
 
         # Condition where we have already updated the record
         if (
-            value.block_number < contract.last_updated_block
+            value.block_number <= contract.last_updated_block
             or contract.last_updated_timestamp is None
         ):
             logger.info(
