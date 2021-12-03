@@ -34,7 +34,7 @@ app.add_middleware(
     allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
     allow_methods=[method.strip() for method in settings.CORS_ALLOW_METHODS.split(',')],
     allow_headers=[header.strip() for header in settings.CORS_ALLOW_HEADERS.split(',')],
-    expose_credentials=[header.strip() for header in settings.CORS_EXPOSE_HEADERS.split(',')],
+    expose_headers=[header.strip() for header in settings.CORS_EXPOSE_HEADERS.split(',')],
 )
 
 logger.info("Starting metrics server.")
