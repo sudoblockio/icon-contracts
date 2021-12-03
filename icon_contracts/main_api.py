@@ -30,10 +30,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
+    allow_origins=[origin.strip() for origin in settings.CORS_ALLOW_ORIGINS.split(',')],
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=[method.strip() for method in settings.CORS_ALLOW_METHODS.split(',')],
+    allow_headers=[header.strip() for header in settings.CORS_ALLOW_HEADERS.split(',')],
+    expose_credentials=[header.strip() for header in settings.CORS_EXPOSE_HEADERS.split(',')],
 )
 
 logger.info("Starting metrics server.")

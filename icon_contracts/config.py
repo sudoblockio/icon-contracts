@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     DOCS_PREFIX: str = "/api/v1/contracts/docs"
 
     CORS_ALLOW_ORIGINS: str = "*"
+    CORS_ALLOW_CREDENTIALS: bool = False
+    CORS_ALLOW_METHODS: str = "GET,POST,HEAD,OPTIONS"
+    CORS_ALLOW_HEADERS: str = ""
+    CORS_EXPOSE_HEADERS: str = "x-total-count"
 
     # Monitoring
     HEALTH_POLLING_INTERVAL: int = 60
