@@ -19,39 +19,24 @@ async def get_contracts(
     limit: int = Query(100, gt=0, lt=101),
     contract_type: str = Query(None),
     status: str = Query(None),
-    # last_updated_block: int = Query(None),
-    # last_updated_timestamp: int = Query(None),
-    # created_block: int = Query(None),
-    created_timestamp: int = Query(None),
 ) -> List[Contract]:
     """Return list of contracts"""
-
     query = select(Contract).offset(skip).limit(limit)
-    query_count = select(func.count(Contract.address))
+    query_count = select([func.count(Contract.address)])
 
     if contract_type:
         query = query.where(Contract.contract_type == contract_type)
-        query_count = query.where(Contract.contract_type == contract_type)
+        query_count = query_count.where(Contract.contract_type == contract_type)
     if status:
         query = query.where(Contract.status == status)
-        query_count = query.where(Contract.status == status)
-    # if last_updated_block:
-    #     query = query.where(Contract.last_updated_block == last_updated_block)
-    #     query_count = query.where(Contract.last_updated_block == last_updated_block)
-    # if last_updated_timestamp:
-    #     query = query.where(Contract.last_updated_timestamp == last_updated_timestamp)
-    #     query_count = query.where(Contract.last_updated_timestamp == last_updated_timestamp)
-    # if created_block:
-    #     query = query.where(Contract.created_block == created_block)
-    #     query_count = query.where(Contract.created_block == created_block)
-    if created_timestamp:
-        query = query.where(Contract.created_timestamp == created_timestamp)
-        query_count = query.where(Contract.created_timestamp == created_timestamp)
+        query_count = query_count.where(Contract.status == status)
 
-    result = await session.execute(query)
     result_count = await session.execute(query_count)
+    result = await session.execute(query)
 
-    response.headers["x-total-count"] = str(result_count.scalars().all()[0])
+    total_count = str(result_count.scalars().all()[0])
+
+    response.headers["x-total-count"] = total_count
 
     contracts = result.scalars().all()
     return contracts
