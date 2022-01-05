@@ -29,6 +29,11 @@ def zip_content_to_dir(content: str, zip_name: str) -> str:
     return contract_path + ".zip"
 
 
+def unzip_get_sha(zip_path: str):
+    """Unzip the contents of zip_path and return sha of source """
+    pass
+
+
 def get_s3_client():
     if settings.CONTRACTS_S3_AWS_SECRET_ACCESS_KEY:
         return boto3.client(
@@ -51,7 +56,7 @@ def get_contract_name(address):
     if name_response.status_code == 200:
         return icx_call(address, {"method": "name"}).json()["result"]
     else:
-        return "Unknown"
+        return ""
 
 
 # TODO: This is viable if we want to keep track of the contracts
