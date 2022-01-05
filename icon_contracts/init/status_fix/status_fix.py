@@ -47,8 +47,8 @@ def fix_db():
 
     for c in old_contracts:
 
-        if c["status"] == "1":
-            status = "Accepted"
+        if c["status"] == "Accepted":
+            status = "Active"
         else:
             status = "Rejected"
 
