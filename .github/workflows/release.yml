@@ -140,12 +140,12 @@ jobs:
           path: charts
           token: ${{ secrets.ICON_CHARTS_PAT }}
 
-      - name: Update prod-sejong deployment values file (API) and re-commit
+      - name: Update prod-lisbon-us-west-2 deployment values file (API)
         uses: fjogeleit/yaml-update-action@master
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-us-west-2/sejong/contracts/values.yaml'
+          valueFile: 'deployments/prod-us-west-2/lisbon/contracts/values.yaml'
           propertyPath: 'api.image.tag'
           value: prod-${{ steps.source.outputs.TAG }}
           branch: main
@@ -153,18 +153,42 @@ jobs:
           updateFile: true
           commitChange: false
 
-      - name: Update prod-sejong deployment values file (WORKER) and re-commit
+      - name: Update prod-lisbon-us-west-2 deployment values file (WORKER)
         uses: fjogeleit/yaml-update-action@master
         with:
           workDir: charts
           repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-us-west-2/sejong/contracts/values.yaml'
+          valueFile: 'deployments/prod-us-west-2/lisbon/contracts/values.yaml'
           propertyPath: 'worker.image.tag'
           value: prod-${{ steps.source.outputs.TAG }}
           branch: main
           createPR: 'false'
-          message: 'contracts prod deployment (sejong) image versions to ${{ steps.source.outputs.TAG }}'
-          token: ${{ secrets.ICON_CHARTS_PAT }}
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-berlin-us-west-2 deployment values file (API)
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-us-west-2/berlin/contracts/values.yaml'
+          propertyPath: 'api.image.tag'
+          value: prod-${{ steps.source.outputs.TAG }}
+          branch: main
+          createPR: 'false'
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-berlin-us-west-2 deployment values file (WORKER)
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-us-west-2/berlin/contracts/values.yaml'
+          propertyPath: 'worker.image.tag'
+          value: prod-${{ steps.source.outputs.TAG }}
+          branch: main
+          createPR: 'false'
           updateFile: true
           commitChange: false
 
