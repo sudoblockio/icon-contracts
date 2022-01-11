@@ -84,10 +84,11 @@ class Worker(BaseModel):
                 "group.id": self.consumer_group,
                 "key.deserializer": StringDeserializer("utf_8"),
                 "queued.max.messages.kbytes": "100MB",
-                "value.deserializer": ProtobufDeserializer(TransactionRaw),
+                "value.deserializer": ProtobufDeserializer(
+                    message_type=TransactionRaw, conf={"use.deprecated.format": True}
+                ),
                 # Offset determined by worker type head (latest) or tail (earliest)
                 "auto.offset.reset": self.auto_offset_reset,
-                # "debug": "broker,cgrp",
             }
         )
 
@@ -98,7 +99,12 @@ class Worker(BaseModel):
         self.schema_registry_client = SchemaRegistryClient({"url": settings.SCHEMA_REGISTRY_URL})
 
         self.protobuf_serializer = ProtobufSerializer(
-            ContractProcessed, self.schema_registry_client, conf={"auto.register.schemas": True}
+            ContractProcessed,
+            self.schema_registry_client,
+            conf={
+                "auto.register.schemas": True,
+                "use.deprecated.format": True,
+            },
         )
 
         self.protobuf_producer = SerializingProducer(
