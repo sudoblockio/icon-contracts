@@ -1,22 +1,21 @@
-import asyncio
 from multiprocessing.pool import ThreadPool
 
 import uvicorn
+from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI
 from fastapi_health import health
 from loguru import logger
 from prometheus_client import start_http_server
 from starlette.middleware.cors import CORSMiddleware
-from brotli_asgi import BrotliMiddleware
 
+from icon_contracts.api.health import is_database_online
 from icon_contracts.api.v1.router import api_router
 from icon_contracts.config import settings
-from icon_contracts.api.health import is_database_online
 
 tags_metadata = [
     {
         "name": "icon-contracts",
-        "description": "...",
+        "description": "Contracts and tokens service.",
     },
 ]
 
@@ -31,11 +30,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.CORS_ALLOW_ORIGINS.split(',')],
+    allow_origins=[origin.strip() for origin in settings.CORS_ALLOW_ORIGINS.split(",")],
     allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_methods=[method.strip() for method in settings.CORS_ALLOW_METHODS.split(',')],
-    allow_headers=[header.strip() for header in settings.CORS_ALLOW_HEADERS.split(',')],
-    expose_headers=[header.strip() for header in settings.CORS_EXPOSE_HEADERS.split(',')],
+    allow_methods=[method.strip() for method in settings.CORS_ALLOW_METHODS.split(",")],
+    allow_headers=[header.strip() for header in settings.CORS_ALLOW_HEADERS.split(",")],
+    expose_headers=[header.strip() for header in settings.CORS_EXPOSE_HEADERS.split(",")],
 )
 
 app.add_middleware(

@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import subprocess
 from typing import Any
 
 from google.protobuf.json_format import MessageToJson
@@ -23,6 +24,8 @@ from icon_contracts.workers.kafka import Worker
 
 metrics = Metrics()
 
+CONTRACT_VERIFICATION_CONTRACTS = {"cx84c88b975f60aeff9ee534b5efdb69d66d239596"}  # Berlin
+
 
 class TransactionsWorker(Worker):
     # Need to pipe this in due to bug in boto
@@ -35,10 +38,11 @@ class TransactionsWorker(Worker):
     contracts_created_python: int = 0
     contracts_updated_python: int = 0
 
-    def java_contract(self, content, value):
-        pass
-
-    def python_contract(self, content: str, value: TransactionRaw):
+    def process_contract(self, content: str, value: TransactionRaw):
+        """
+        Process the contract by checking its status in the DB and uploading the
+        source to S3 and including a download link in the DB.
+        """
         tx_result = icx_getTransactionResult(value.hash).json()["result"]
 
         address = tx_result["scoreAddress"]
@@ -97,6 +101,9 @@ class TransactionsWorker(Worker):
             contract.last_updated_block = value.block_number
             contract.last_updated_timestamp = timestamp
 
+            # Method that classifies the contract based on ABI for IRC2 stuff
+            contract.extract_contract_details()
+
         # Condition where we have already updated the record
         if (
             value.block_number <= contract.last_updated_block
@@ -108,9 +115,6 @@ class TransactionsWorker(Worker):
             contract.created_block = value.block_number
             contract.created_timestamp = timestamp
             contract.creation_hash = value.hash
-
-        # Method that classifies the contract based on ABI for IRC2 stuff
-        contract.extract_contract_details()
 
         # Produce the record so adjacent services can find out about new contracts as
         # this is the only service that actually inspects the ABI and classifies the
@@ -141,61 +145,137 @@ class TransactionsWorker(Worker):
             self.json_producer.poll(0)
             return
 
-        # Audit related events
-        if data["method"] in ["acceptScore", "rejectScore"]:
-            address = icx_getTransactionResult(data["params"]["txHash"]).json()["result"][
-                "scoreAddress"
-            ]
+        if "method" not in data:
+            logger.info(f"No method found in audit hash {value.hash}")
+            return
 
-            # Make the status the address in case there is some funky situation
-            # we don't know about -> proxy for dead letter queue
-            status = address
-            if data["method"] == "acceptScore":
-                status = "Accepted"
-            elif data["method"] == "rejectScore":
-                status = "Rejected"
+        if data["method"] not in ["acceptScore", "rejectScore"]:
+            logger.info(f"Method not supported in audit hash {value.hash}")
+            return
 
-            contract = self.session.get(Contract, address)
+        # # Audit related events
+        address = icx_getTransactionResult(data["params"]["txHash"]).json()["result"][
+            "scoreAddress"
+        ]
 
-            if contract is None:
-                logger.info(
-                    f"Creating contract from approval for address = {address} at block = {value.block_number}"
-                )
-                self.contracts_created_python += 1
-                metrics.contracts_created_python.set(self.contracts_created_python)
-                contract = Contract(
-                    address=address,
-                    name=get_contract_name(address),
-                    status=status,
-                    owner_address=value.from_address,
-                    # We deal with update dates based on submission due to 2.0 dropping audit
-                    last_updated_block=0,
-                )
-            else:
-                logger.info(
-                    f"Updating contract status from approval for address = {address} at block = {value.block_number}"
-                )
-                self.contracts_updated_python += 1
-                metrics.contracts_created_python.set(self.contracts_updated_python)
+        status = None
+        if data["method"] == "acceptScore":
+            status = "Accepted"
+        elif data["method"] == "rejectScore":
+            status = "Rejected"
 
-                contract.status = status
+        contract = self.session.get(Contract, address)
 
-            self.produce_protobuf(
-                settings.PRODUCER_TOPIC_CONTRACTS,
-                value.hash,  # Keyed on hash
-                contract_to_proto(contract),
+        if contract is None:
+            logger.info(
+                f"Creating contract from approval for address = {address} at block = {value.block_number}"
+            )
+            self.contracts_created_python += 1
+            metrics.contracts_created_python.set(self.contracts_created_python)
+            contract = Contract(
+                address=address,
+                name=get_contract_name(address),
+                status=status,
+                owner_address=value.from_address,
+                # We deal with update dates based on submission due to 2.0 dropping audit
+                last_updated_block=0,
             )
 
-            self.session.merge(contract)
-            self.session.commit()
+        # Out of order processes
+        # Checking last_updated_timestamp case for when we see a contract approval
+        # event before we see the contract submission
+        if (
+            value.block_number > contract.last_updated_block
+            or contract.last_updated_timestamp is None
+        ):
+            logger.info(
+                f"Updating contract status from approval for address = {address} at block = {value.block_number}"
+            )
+            self.contracts_updated_python += 1
+            metrics.contracts_created_python.set(self.contracts_updated_python)
+
+            contract.status = status
+
+        self.produce_protobuf(
+            settings.PRODUCER_TOPIC_CONTRACTS,
+            value.hash,  # Keyed on hash
+            contract_to_proto(contract),
+        )
+
+        self.session.merge(contract)
+        self.session.commit()
+
+    def process_verification(self, value):
+        data = json.loads(value.data)
+
+        if "method" not in data or "params" not in data:
+            return
+
+        if data["method"] != "verify":
+            return
+
+        params = data["params"]
+
+        # Verify that the sender is the owner address for the contract
+        contract = self.session.get(Contract, params["contract_address"])
+        if contract is None:
+            logger.info(
+                f'Contract verification Tx to {params["contract_address"]} not found with Tx hash {value.hash}'
+            )
+            return
+
+        if contract.owner_address != value.from_address:
+            logger.info(
+                f'Contract verification Tx from {value.from_address} to {params["contract_address"]} not from owner with Tx hash {value.hash}'
+            )
+            return
+
+        # Verify that the source code is the same as what is on-chain
+        contract_path = None
+        try:
+            # Unzip the source code
+            zip_name = f"{contract.address}_{contract.revision_number}_source_code"
+            # Unzip the contents of the dict to a directory
+            contract_path = zip_content_to_dir(params["zipped_source_code"], zip_name)
+
+            # Build the jar
+            subprocess.run(["cd", contract_path, "&&", "./gradlew", "optimizedJar"])
+
+            binary_path = os.path.join(contract_path, params["optimized_jar_path"])
+            # Find binary
+            if not os.path.exists(binary_path):
+                logger.info(f"Can't find contract path for hash {value.hash}")
+                return
+
+            # Compare binary to what is on-chain
+            from icon_contracts.workers.verification import compare_source
+
+            compare_source(contract.source_code_link, binary_path)
+
+            # Get the optimized jar file name
+
+            upload_to_s3(self.s3_client, contract_path, zip_name)
+            contract.verified_source_code_link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/verified-contract-sources/{zip_name}"
+            # Cleanup
+            shutil.rmtree(os.path.dirname(contract_path))
+            logger.info(f"Uploaded contract to {contract.source_code_link}")
+        except Exception:
+            logger.info(f"Unable to upload ")
+            if os.path.exists(contract_path):
+                shutil.rmtree(os.path.dirname(contract_path))
 
     def process(self, msg):
 
         value = msg.value()
 
+        if value.block_number == 30553699:
+            print()
+
         if value.to_address == "None":
             return
 
+        # Logic that handles backfills so that they do not continue to consume records
+        # past the offset that the job was set off at.
         if self.partition_dict is not None:
             if self.msg_count % 1000 == 0:
                 end_offset = self.partition_dict[(self.topic, msg.partition())]
@@ -229,6 +309,10 @@ class TransactionsWorker(Worker):
         if value.to_address == settings.one_address:
             self.process_audit(value)
 
+        # # Handle verification process
+        # if value.to_address in CONTRACT_VERIFICATION_CONTRACTS:
+        #     self.process_verification(value)
+
         # Need to check the data field if there is a json payload otherwise we are not
         # interested in it in this context
         if str(value.data) != "null":
@@ -247,14 +331,9 @@ class TransactionsWorker(Worker):
         if data is not None:
             # These are contract creation Txs
             if "contentType" in data:
-                if data["contentType"] == "application/zip":
-                    logger.info(f"Handling python contract creation hash {value.hash}.")
-                    self.python_contract(data["content"], value)
-
-                if data["contentType"] == "application/java":
-                    logger.info(f"Handling java contract creation hash {value.hash}.")
-                    self.java_contract(data["content"], value)
-
+                if data["contentType"] in ["application/zip", "application/java"]:
+                    logger.info(f"Handling contract creation hash {value.hash}.")
+                    self.process_contract(data["content"], value)
                 return
 
 
