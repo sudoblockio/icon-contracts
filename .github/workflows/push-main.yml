@@ -136,5 +136,27 @@ jobs:
           branch: main
           createPR: 'false'
           message: 'contracts dev deployment (mainnet) image versions to ${{ github.run_number }}'
-          token: ${{ secrets.ICON_CHARTS_PAT }}
+#          token: ${{ secrets.ICON_CHARTS_PAT }}
+#          updateFile: true
           updateFile: true
+          commitChange: false
+
+      - name: Configure credentials
+        uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.ICON_CHARTS_PAT }}'
+          global: true
+
+      - name: Commit all updates
+        run: |
+          git add -A
+          git commit -m "contracts dev and testnet deployment image versions to ${{ github.run_number }}"
+          git push origin
+        working-directory: charts
+
+      - name: Push tags
+        run: |
+          git tag -f contracts-prod-uswest2
+          git tag -f contracts-prod-euwest1
+          git push -f origin --tags
+        working-directory: charts
