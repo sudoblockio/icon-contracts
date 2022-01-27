@@ -75,6 +75,11 @@ class Settings(BaseSettings):
 
     UNZIP_PYTHON_SOURCE_CODE: bool = False
 
+    ENABLE_CONTRACT_VERIFICATION: bool = True
+
+    # This defaulting to the container path and is overrided in tests
+    GRADLE_PATH: str = "/opt"
+
     # # Redis
     # REDIS_HOST: str = "redis"
     # REDIS_PORT: int = 6379

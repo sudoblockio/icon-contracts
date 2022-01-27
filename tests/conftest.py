@@ -10,7 +10,6 @@ from loguru import logger
 from sqlalchemy.orm import sessionmaker
 
 from icon_contracts.config import settings
-from icon_contracts.main_api import app
 from icon_contracts.workers.db import engine
 
 # @pytest.fixture(scope="session")
@@ -28,6 +27,8 @@ def db():
 
 @pytest.fixture(scope="module")
 def client() -> Generator:
+    from icon_contracts.main_api import app
+
     with TestClient(app) as c:
         yield c
 
@@ -49,9 +50,19 @@ def fixtures_dir():
 
 
 @pytest.fixture
-def chdir_base():
-    base = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..")
-    os.chdir(base)
+def chdir_fixtures(fixtures_dir):
+    os.chdir(fixtures_dir)
+    yield
+
+
+@pytest.fixture
+def base_dir():
+    return os.path.join(os.path.abspath(os.path.dirname(__file__)), "..")
+
+
+@pytest.fixture
+def chdir_base(base_dir):
+    os.chdir(base_dir)
     yield
 
 

@@ -32,7 +32,7 @@ def backfill_job(db):
 
 
 def test_get_current_offset(db, backfill_job):
-    settings.JOB_ID = "test"
+    settings.JOB_ID = "test6"
     backfill_job(settings.JOB_ID)
 
     with db as session:
@@ -43,13 +43,14 @@ def test_get_current_offset(db, backfill_job):
 
 
 # def test_transactions_worker_tail(db, backfill_job):
-#     settings.JOB_ID = 'test1'
+#     settings.JOB_ID = "test6"
 #     backfill_job(settings.JOB_ID)
 #
 #     with db as session:
 #         consumer_group, partition_dict = get_current_offset(session)
 #
 #     from icon_contracts.workers.transactions import transactions_worker_tail
+#
 #     transactions_worker_tail(
 #         consumer_group=consumer_group,
 #         partition_dict=partition_dict,

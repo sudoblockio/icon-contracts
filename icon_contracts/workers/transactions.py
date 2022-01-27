@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+import zipfile
 from typing import Any
 
 from google.protobuf.json_format import MessageToJson
@@ -21,6 +22,11 @@ from icon_contracts.utils.contract_content import (
 from icon_contracts.utils.rpc import icx_getTransactionResult
 from icon_contracts.workers.db import session_factory
 from icon_contracts.workers.kafka import Worker
+from icon_contracts.workers.verification import (
+    compare_source,
+    get_on_chain_contract_src,
+    replace_build_tool,
+)
 
 metrics = Metrics()
 
@@ -206,6 +212,39 @@ class TransactionsWorker(Worker):
         self.session.commit()
 
     def process_verification(self, value):
+        """
+        Process contract verifications. Only runs txs to the contract verification
+        contract which adheres to a schema that we can control.
+
+        Runs the following steps:
+        1. Validates that the sender of the Tx is the owner of the contract
+        2. Unzips the bytestring of the contract to `verified_source_code/`
+            a. Remove any `build/` directories so to make it impossible for someone
+            to provide a pre-built binary that is not what we are verifying
+            b. Run gradelew Optimizedjar on it to produce the
+        3. Unzip the resulting binary
+        4. Downloads the binary that is on-chain from the backend `source_code_link`
+        5. Does a file comparison of those two items to make sure they are the same
+        6. Pushes the new source code to s3
+        7. Stores a link in db and marks as verified
+
+        Assumes that the backend has the latest version of the contract
+
+        Results in the following directory structure:
+        - /tmp/<random>/
+            - verified_source_code.txt - From verification Tx
+            - verified_source_code.zip - From txt
+            - verified_source_code - From unzip
+                - Remove all build dirs
+                - Replace gradlew and wrapper with own version - safety?
+                - Run gradlew optimized jar
+                - Unzip the binary to verified_jar/ -> Binary path supplied from msg
+            - verified_jar dir unzipped
+            - on_chain_source_code - From the last updated source code - s3 downloaded
+        """
+        if not settings.ENABLE_CONTRACT_VERIFICATION:
+            return
+
         data = json.loads(value.data)
 
         if "method" not in data or "params" not in data:
@@ -234,46 +273,66 @@ class TransactionsWorker(Worker):
         contract_path = None
         try:
             # Unzip the source code
-            zip_name = f"{contract.address}_{contract.revision_number}_source_code"
+            zip_name = "verified_source_code"
             # Unzip the contents of the dict to a directory
             contract_path = zip_content_to_dir(params["zipped_source_code"], zip_name)
 
-            # Build the jar
-            subprocess.run(["cd", contract_path, "&&", "./gradlew", "optimizedJar"])
+            # chdir to /tmp/tmp<random>/
+            tmp_path = os.path.dirname(contract_path)
+            os.chdir(tmp_path)
 
-            binary_path = os.path.join(contract_path, params["optimized_jar_path"])
+            with zipfile.ZipFile(contract_path, "r") as zip_ref:
+                zip_ref.extractall(zip_name)
+
+            # Paths
+            source_code_head_dir = params["source_code_location"].split("/")[0]
+            verified_contract_path = os.path.join(tmp_path, zip_name, source_code_head_dir)
+
+            # Use an official gradlew builder and wrapper
+            replace_build_tool(verified_contract_path)
+            subprocess.run([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
+
             # Find binary
+            binary_path = os.path.join(tmp_path, zip_name, params["source_code_location"])
             if not os.path.exists(binary_path):
-                logger.info(f"Can't find contract path for hash {value.hash}")
+                logger.info(f"Binary not found in {binary_path} for {value.hash}")
                 return
 
-            # Compare binary to what is on-chain
-            from icon_contracts.workers.verification import compare_source
+            # Unzip the optimized jar so that we can inspect each file
+            with zipfile.ZipFile(binary_path, "r") as zip_ref:
+                zip_ref.extractall("verified_jar/")
 
-            compare_source(contract.source_code_link, binary_path)
+            # Downloads the on chain zipped binaries
+            on_chain_src_dir = get_on_chain_contract_src(contract.source_code_link)
+
+            # Compare binary to what is on-chain
+            compare_source(on_chain_src_dir, "verified_jar")
+            logger.info(f"Successfully compared {value.hash}")
 
             # Get the optimized jar file name
+            link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/verified-contract-sources/{params['contract_address']}.zip"
 
-            upload_to_s3(self.s3_client, contract_path, zip_name)
-            contract.verified_source_code_link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/verified-contract-sources/{zip_name}"
+            upload_to_s3(
+                self.s3_client,
+                contract_path,
+                params["contract_address"] + ".zip",
+                prefix="verified-contract-sources",
+            )
+
+            contract.verified_source_code_link = link
+            contract.verified = True
+            self.session.merge(contract)
+            self.session.commit()
+
             # Cleanup
-            shutil.rmtree(os.path.dirname(contract_path))
+            shutil.rmtree(tmp_path)
             logger.info(f"Uploaded contract to {contract.source_code_link}")
-        except Exception:
-            logger.info(f"Unable to upload ")
+        except Exception as e:
+            logger.info(f"Unable verify contract - {value.hash} - {e}")
             if os.path.exists(contract_path):
                 shutil.rmtree(os.path.dirname(contract_path))
 
-    def process(self, msg):
-
-        value = msg.value()
-
-        if value.block_number == 30553699:
-            print()
-
-        if value.to_address == "None":
-            return
-
+    def handle_msg_count(self, msg=None, value=None):
         # Logic that handles backfills so that they do not continue to consume records
         # past the offset that the job was set off at.
         if self.partition_dict is not None:
@@ -301,9 +360,23 @@ class TransactionsWorker(Worker):
             )
         self.msg_count += 1
 
+    def process(self, msg):
+
+        value = msg.value()
+
+        if value.block_number == 30553699:
+            print()
+
+        if value.to_address == "None":
+            return
+
         # Pass on any invalid Tx in this service
         if value.receipt_status != 1:
             return
+
+        # Logic that handles backfills so that they do not continue to consume records
+        # past the offset that the job was set off at.
+        self.handle_msg_count(msg=msg, value=value)
 
         # Handle audit process
         if value.to_address == settings.one_address:

@@ -45,10 +45,13 @@ def get_s3_client():
         return None
 
 
-def upload_to_s3(s3_client: Any, filename: str, key: str):
+def upload_to_s3(s3_client: Any, filename: str, key: str, prefix: str = "contract-sources"):
     # Can't share client across threads
     # https://github.com/boto/botocore/issues/1246
-    s3_client.upload_file(filename, settings.CONTRACTS_S3_BUCKET, "contract-sources/" + key)
+    if s3_client is None:
+        logger.info(f"Skipping S3 upload for filename {filename}.")
+        return
+    s3_client.upload_file(filename, settings.CONTRACTS_S3_BUCKET, f"{prefix}/" + key)
 
 
 def get_contract_name(address):
