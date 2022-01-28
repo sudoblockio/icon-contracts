@@ -30,7 +30,11 @@ from icon_contracts.workers.verification import (
 
 metrics = Metrics()
 
-CONTRACT_VERIFICATION_CONTRACTS = {"cx84c88b975f60aeff9ee534b5efdb69d66d239596"}  # Berlin
+
+CONTRACT_VERIFICATION_CONTRACTS = {
+    "cx84c88b975f60aeff9ee534b5efdb69d66d239596",  # Berlin
+    "cx338322697c252ec776bf81157f55e1f47beb7d78",  # Lisbon
+}
 
 
 class TransactionsWorker(Worker):
@@ -363,9 +367,6 @@ class TransactionsWorker(Worker):
     def process(self, msg):
 
         value = msg.value()
-
-        if value.block_number == 30553699:
-            print()
 
         if value.to_address == "None":
             return

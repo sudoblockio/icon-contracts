@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     UNZIP_PYTHON_SOURCE_CODE: bool = False
 
     ENABLE_CONTRACT_VERIFICATION: bool = True
+    # Using this setting could be confusing. Might just be easier to check against
+    # a list of valid contracts on each network. Also list input would need delimination
+    # CONTRACT_VERIFICATION_CONTRACT: list = []  # Blank to use default list
 
     # This defaulting to the container path and is overrided in tests
     GRADLE_PATH: str = "/opt"
