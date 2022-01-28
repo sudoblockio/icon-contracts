@@ -34,7 +34,7 @@ COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 COPY docker/gradlew ./
-COPY docker/gradle ./
+COPY docker/gradle ./gradle
 
 RUN useradd -m icon
 USER icon
