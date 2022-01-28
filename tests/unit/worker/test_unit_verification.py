@@ -1,5 +1,6 @@
-import filecmp
 import os
+import shutil
+import subprocess
 
 import pytest
 
@@ -18,3 +19,11 @@ def test_compare_source_fail(fixtures_dir, fixture):
     os.chdir(os.path.join(fixtures_dir, "java_contracts", "comparison", fixture))
     with pytest.raises(AssertionError):
         compare_source("source_code", "verified_jar")
+
+
+def test_error_subprocess_gradlew(fixtures_dir):
+    """Make sure our error handling is ok with subprocess calling gradlew."""
+    verified_contract_path = os.path.join(fixtures_dir, "java_contracts", "src")
+    os.chdir(verified_contract_path)
+    subprocess.call([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
+    shutil.rmtree(os.path.join(verified_contract_path, "contracts", "build"))

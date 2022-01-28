@@ -295,15 +295,14 @@ class TransactionsWorker(Worker):
 
         # Verify that the source code is the same as what is on-chain
         contract_path = None
+        # chdir to /tmp/tmp<random>/
+        tmp_path = os.path.dirname(contract_path)
+        os.chdir(tmp_path)
         try:
             # Unzip the source code
             zip_name = "verified_source_code"
             # Unzip the contents of the dict to a directory
             contract_path = zip_content_to_dir(params["zipped_source_code"], zip_name)
-
-            # chdir to /tmp/tmp<random>/
-            tmp_path = os.path.dirname(contract_path)
-            os.chdir(tmp_path)
 
             with zipfile.ZipFile(contract_path, "r") as zip_ref:
                 zip_ref.extractall(zip_name)
@@ -314,6 +313,7 @@ class TransactionsWorker(Worker):
 
             # Use an official gradlew builder and wrapper
             replace_build_tool(verified_contract_path)
+            logger.info(f"Running gradlew on {verified_contract_path} path.")
             subprocess.run([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
 
             # Find binary
@@ -354,8 +354,8 @@ class TransactionsWorker(Worker):
         except Exception as e:
             logger.info(f"Unable verify contract - {value.hash} - {e}")
             if settings.CONTRACT_VERIFICATION_CLEANUP:
-                if os.path.exists(contract_path):
-                    shutil.rmtree(os.path.dirname(contract_path))
+                if os.path.exists(tmp_path):
+                    shutil.rmtree(os.path.dirname(tmp_path))
 
     def handle_msg_count(self, msg=None, value=None):
         # Logic that handles backfills so that they do not continue to consume records

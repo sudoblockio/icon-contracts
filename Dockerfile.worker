@@ -35,6 +35,8 @@ RUN chmod +x entrypoint.sh
 
 COPY docker/gradlew ./
 COPY docker/gradle ./gradle
+# Initializes gradle so it doesn't need to initialize
+RUN ./gradlew
 
 RUN useradd -m icon
 USER icon
