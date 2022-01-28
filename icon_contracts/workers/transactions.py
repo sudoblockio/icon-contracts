@@ -33,7 +33,7 @@ metrics = Metrics()
 
 
 CONTRACT_VERIFICATION_CONTRACTS = {
-    "cx84c88b975f60aeff9ee534b5efdb69d66d239596",  # Berlin
+    "cxdd61820cd8e5e13f65ee368ffea34b3aa1d94461",  # Berlin
     "cx338322697c252ec776bf81157f55e1f47beb7d78",  # Lisbon
 }
 
