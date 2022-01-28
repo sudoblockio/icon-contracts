@@ -353,8 +353,9 @@ class TransactionsWorker(Worker):
             logger.info(f"Uploaded contract to {contract.source_code_link}")
         except Exception as e:
             logger.info(f"Unable verify contract - {value.hash} - {e}")
-            if os.path.exists(contract_path):
-                shutil.rmtree(os.path.dirname(contract_path))
+            if settings.CONTRACT_VERIFICATION_CLEANUP:
+                if os.path.exists(contract_path):
+                    shutil.rmtree(os.path.dirname(contract_path))
 
     def handle_msg_count(self, msg=None, value=None):
         # Logic that handles backfills so that they do not continue to consume records
