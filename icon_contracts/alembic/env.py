@@ -12,9 +12,10 @@ from sqlmodel import SQLModel
 
 from icon_contracts.api.db import ASYNC_SQLALCHEMY_DATABASE_URL
 
-# TODO: Make sure this works!!!
+# TODO: Import models here for ORM
 # Other versions imported each object
 from icon_contracts.models.contracts import Contract
+from icon_contracts.models.social_media import SocialMedia
 
 config = context.config
 

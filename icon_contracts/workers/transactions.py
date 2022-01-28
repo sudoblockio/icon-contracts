@@ -11,6 +11,7 @@ from icon_contracts.config import settings
 from icon_contracts.log import logger
 from icon_contracts.metrics import Metrics
 from icon_contracts.models.contracts import Contract
+from icon_contracts.models.social_media import SocialMedia
 from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import (
@@ -215,6 +216,23 @@ class TransactionsWorker(Worker):
         self.session.merge(contract)
         self.session.commit()
 
+    def process_verification_social_media(self, params: dict):
+        """Process social media contacts for verifiction txs."""
+
+        social_media = self.session.get(SocialMedia, params["contract_address"])
+        if social_media is None:
+            social_media = SocialMedia(**params)
+
+        ignore_fields = ["source_code_location", "zipped_source_code"]
+        for k, v in params.items():
+            if k in ignore_fields:
+                continue
+
+            setattr(social_media, k, v)
+
+        self.session.merge(social_media)
+        self.session.commit()
+
     def process_verification(self, value):
         """
         Process contract verifications. Only runs txs to the contract verification
@@ -272,6 +290,8 @@ class TransactionsWorker(Worker):
                 f'Contract verification Tx from {value.from_address} to {params["contract_address"]} not from owner with Tx hash {value.hash}'
             )
             return
+
+        self.process_verification_social_media(params)
 
         # Verify that the source code is the same as what is on-chain
         contract_path = None
@@ -383,9 +403,9 @@ class TransactionsWorker(Worker):
         if value.to_address == settings.one_address:
             self.process_audit(value)
 
-        # # Handle verification process
-        # if value.to_address in CONTRACT_VERIFICATION_CONTRACTS:
-        #     self.process_verification(value)
+        # Handle verification process
+        if value.to_address in CONTRACT_VERIFICATION_CONTRACTS:
+            self.process_verification(value)
 
         # Need to check the data field if there is a json payload otherwise we are not
         # interested in it in this context

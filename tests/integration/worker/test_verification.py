@@ -8,6 +8,7 @@ import pytest
 from icon_contracts.config import settings
 from icon_contracts.log import logger
 from icon_contracts.models.contracts import Contract
+from icon_contracts.models.social_media import SocialMedia
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.workers.transactions import TransactionsWorker
 from icon_contracts.workers.verification import get_on_chain_contract_src
@@ -82,4 +83,8 @@ def test_process_verification(setup_db, db, update_gradle_dir, chdir_fixtures, c
         )
         tx_worker.process_verification(value=tx)
 
+        social_media = session.get(SocialMedia, params["contract_address"])
+
+    assert social_media.country == "space"
     assert "Unable verify contract" not in caplog.text
+    assert "Successfully compared" in caplog.text
