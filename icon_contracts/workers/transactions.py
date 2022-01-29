@@ -296,13 +296,13 @@ class TransactionsWorker(Worker):
         # Verify that the source code is the same as what is on-chain
         contract_path = None
         # chdir to /tmp/tmp<random>/
-        tmp_path = os.path.dirname(contract_path)
-        os.chdir(tmp_path)
         try:
             # Unzip the source code
             zip_name = "verified_source_code"
             # Unzip the contents of the dict to a directory
             contract_path = zip_content_to_dir(params["zipped_source_code"], zip_name)
+            tmp_path = os.path.dirname(contract_path)
+            os.chdir(tmp_path)
 
             with zipfile.ZipFile(contract_path, "r") as zip_ref:
                 zip_ref.extractall(zip_name)
@@ -314,7 +314,10 @@ class TransactionsWorker(Worker):
             # Use an official gradlew builder and wrapper
             replace_build_tool(verified_contract_path)
             logger.info(f"Running gradlew on {verified_contract_path} path.")
-            subprocess.run([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
+            os.chdir(verified_contract_path)
+            subprocess.run(["./gradlew", "optimizedJar"])
+            # subprocess.run([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
+            os.chdir(tmp_path)
 
             # Find binary
             binary_path = os.path.join(tmp_path, zip_name, params["source_code_location"])
