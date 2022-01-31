@@ -294,7 +294,7 @@ class TransactionsWorker(Worker):
         self.process_verification_social_media(params)
 
         # Verify that the source code is the same as what is on-chain
-        contract_path = None
+        tmp_path = None
         # chdir to /tmp/tmp<random>/
         try:
             # Unzip the source code
@@ -302,6 +302,7 @@ class TransactionsWorker(Worker):
             # Unzip the contents of the dict to a directory
             contract_path = zip_content_to_dir(params["zipped_source_code"], zip_name)
             tmp_path = os.path.dirname(contract_path)
+            logger.info(f"Validating in {tmp_path}")
             os.chdir(tmp_path)
 
             with zipfile.ZipFile(contract_path, "r") as zip_ref:
@@ -353,10 +354,10 @@ class TransactionsWorker(Worker):
 
             # Cleanup
             shutil.rmtree(tmp_path)
-            logger.info(f"Uploaded contract to {contract.source_code_link}")
+            logger.info(f"Uploaded contract to {contract.verified_source_code_link}")
         except Exception as e:
             logger.info(f"Unable verify contract - {value.hash} - {e}")
-            if settings.CONTRACT_VERIFICATION_CLEANUP:
+            if settings.CONTRACT_VERIFICATION_CLEANUP and tmp_path is not None:
                 if os.path.exists(tmp_path):
                     shutil.rmtree(os.path.dirname(tmp_path))
 
