@@ -36,11 +36,6 @@ def test_encoding(chdir_fixtures):
 
 
 @pytest.fixture()
-def clean_up_output():
-    pass
-
-
-@pytest.fixture()
 def update_gradle_dir(base_dir):
     settings.GRADLE_PATH = os.path.join(base_dir, "docker")
 

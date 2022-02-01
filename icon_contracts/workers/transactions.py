@@ -21,6 +21,7 @@ from icon_contracts.utils.contract_content import (
     zip_content_to_dir,
 )
 from icon_contracts.utils.rpc import icx_getTransactionResult
+from icon_contracts.utils.zip import unzip_safe
 from icon_contracts.workers.db import session_factory
 from icon_contracts.workers.kafka import Worker
 from icon_contracts.workers.verification import (
@@ -305,8 +306,8 @@ class TransactionsWorker(Worker):
             logger.info(f"Validating in {tmp_path}")
             os.chdir(tmp_path)
 
-            with zipfile.ZipFile(contract_path, "r") as zip_ref:
-                zip_ref.extractall(zip_name)
+            # Unzip utility that protects against zip bombs
+            unzip_safe(input_zip=contract_path, output_dir=zip_name, contract_hash=value.hash)
 
             # Paths
             source_code_head_dir = params["source_code_location"].split("/")[0]
