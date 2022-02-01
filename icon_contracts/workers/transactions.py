@@ -116,6 +116,10 @@ class TransactionsWorker(Worker):
             # Method that classifies the contract based on ABI for IRC2 stuff
             contract.extract_contract_details()
 
+            # Remove any verified contract link
+            contract.verified_source_code_link = None
+            contract.verified = False
+
         # Condition where we have already updated the record
         if (
             value.block_number <= contract.last_updated_block
