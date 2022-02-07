@@ -4,6 +4,7 @@ import subprocess
 
 import pytest
 
+from icon_contracts.models.verification_contract import VerificationInput
 from icon_contracts.workers.verification import compare_source
 
 
@@ -27,3 +28,25 @@ def test_error_subprocess_gradlew(fixtures_dir):
     os.chdir(verified_contract_path)
     subprocess.call([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
     shutil.rmtree(os.path.join(verified_contract_path, "contracts", "build"))
+
+
+def test_regex_validator_verification(fixtures_dir):
+    """Make sure the validators don't allow more than one word."""
+    v = VerificationInput(
+        gradle_task="foo",
+        gradle_target="bar",
+    )
+    assert v.gradle_target == "bar"
+
+
+BAD_TARGETS = ["bar(bar", "bar`curl ht`bar"]
+
+
+@pytest.mark.parametrize("target", BAD_TARGETS)
+def test_regex_validator_verification_fails(target, fixtures_dir):
+    """Make sure the validators don't allow more than one word."""
+    with pytest.raises(ValueError):
+        v = VerificationInput(
+            gradle_task="foo",
+            gradle_target=target,
+        )
