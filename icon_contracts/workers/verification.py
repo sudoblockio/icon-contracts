@@ -12,6 +12,14 @@ from icon_contracts.config import settings
 from icon_contracts.log import logger
 
 
+def get_source_code_head_dir(source_code_base_dir):
+    dir_contents = os.listdir(source_code_base_dir)
+    if len(dir_contents) == 1:
+        return dir_contents[0]
+    else:
+        raise Exception(f"Should not have more than one dir in {source_code_base_dir}")
+
+
 def get_on_chain_contract_src(source_code_link) -> Optional[str]:
     """Request to s3 to get the zip."""
     r = requests.get(source_code_link)

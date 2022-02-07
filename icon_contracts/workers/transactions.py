@@ -12,6 +12,7 @@ from icon_contracts.log import logger
 from icon_contracts.metrics import Metrics
 from icon_contracts.models.contracts import Contract
 from icon_contracts.models.social_media import SocialMedia
+from icon_contracts.models.verification_contract import VerificationInput
 from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import (
@@ -27,6 +28,7 @@ from icon_contracts.workers.kafka import Worker
 from icon_contracts.workers.verification import (
     compare_source,
     get_on_chain_contract_src,
+    get_source_code_head_dir,
     replace_build_tool,
 )
 
@@ -221,19 +223,19 @@ class TransactionsWorker(Worker):
         self.session.merge(contract)
         self.session.commit()
 
-    def process_verification_social_media(self, params: dict):
+    def process_verification_social_media(self, params: VerificationInput):
         """Process social media contacts for verifiction txs."""
 
-        social_media = self.session.get(SocialMedia, params["contract_address"])
+        social_media = self.session.get(SocialMedia, params.contract_address)
         if social_media is None:
-            social_media = SocialMedia(**params)
+            social_media = SocialMedia(**params.dict())
 
-        ignore_fields = ["source_code_location", "zipped_source_code"]
-        for k, v in params.items():
-            if k in ignore_fields:
-                continue
-
-            setattr(social_media, k, v)
+        # ignore_fields = ["source_code_location", "zipped_source_code"]
+        # for k, v in params.items():
+        #     if k not in SocialMedia.__fields__:
+        #         continue
+        #
+        #     setattr(social_media, k, v)
 
         self.session.merge(social_media)
         self.session.commit()
@@ -248,7 +250,7 @@ class TransactionsWorker(Worker):
         2. Unzips the bytestring of the contract to `verified_source_code/`
             a. Remove any `build/` directories so to make it impossible for someone
             to provide a pre-built binary that is not what we are verifying
-            b. Run gradelew Optimizedjar on it to produce the
+            b. Run gradlew Optimizedjar on it to produce the
         3. Unzip the resulting binary
         4. Downloads the binary that is on-chain from the backend `source_code_link`
         5. Does a file comparison of those two items to make sure they are the same
@@ -280,19 +282,20 @@ class TransactionsWorker(Worker):
         if data["method"] != "verify":
             return
 
-        params = data["params"]
+        # params = data["params"]
+        params = VerificationInput(**data["params"])
 
         # Verify that the sender is the owner address for the contract
-        contract = self.session.get(Contract, params["contract_address"])
+        contract = self.session.get(Contract, params.contract_address)
         if contract is None:
             logger.info(
-                f'Contract verification Tx to {params["contract_address"]} not found with Tx hash {value.hash}'
+                f"Contract verification Tx to {params.contract_address} not found with Tx hash {value.hash}"
             )
             return
 
         if contract.owner_address != value.from_address:
             logger.info(
-                f'Contract verification Tx from {value.from_address} to {params["contract_address"]} not from owner with Tx hash {value.hash}'
+                f"Contract verification Tx from {value.from_address} to {params.contract_address} not from owner with Tx hash {value.hash}"
             )
             return
 
@@ -305,7 +308,7 @@ class TransactionsWorker(Worker):
             # Unzip the source code
             zip_name = "verified_source_code"
             # Unzip the contents of the dict to a directory
-            contract_path = zip_content_to_dir(params["zipped_source_code"], zip_name)
+            contract_path = zip_content_to_dir(params.zipped_source_code, zip_name)
             tmp_path = os.path.dirname(contract_path)
             logger.info(f"Validating in {tmp_path}")
             os.chdir(tmp_path)
@@ -314,19 +317,25 @@ class TransactionsWorker(Worker):
             unzip_safe(input_zip=contract_path, output_dir=zip_name, contract_hash=value.hash)
 
             # Paths
-            source_code_head_dir = params["source_code_location"].split("/")[0]
+            source_code_head_dir = get_source_code_head_dir(os.path.join(tmp_path, zip_name))
             verified_contract_path = os.path.join(tmp_path, zip_name, source_code_head_dir)
 
             # Use an official gradlew builder and wrapper
             replace_build_tool(verified_contract_path)
             logger.info(f"Running gradlew on {verified_contract_path} path.")
             os.chdir(verified_contract_path)
-            subprocess.run(["./gradlew", "optimizedJar"])
-            # subprocess.run([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
-            os.chdir(tmp_path)
+
+            # Create the build command that will be
+            process = ["./gradlew"]
+            if params.gradle_task != "":
+                process.append(":" + params.gradle_target + ":" + params.gradle_task)
+            else:
+                process.append(params.gradle_task)
+            subprocess.run(process)
 
             # Find binary
-            binary_path = os.path.join(tmp_path, zip_name, params["source_code_location"])
+            os.chdir(tmp_path)
+            binary_path = os.path.join(verified_contract_path, params.source_code_location)
             if not os.path.exists(binary_path):
                 logger.info(f"Binary not found in {binary_path} for {value.hash}")
                 return
@@ -343,12 +352,12 @@ class TransactionsWorker(Worker):
             logger.info(f"Successfully compared {value.hash}")
 
             # Get the optimized jar file name
-            link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/verified-contract-sources/{params['contract_address']}.zip"
+            link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/verified-contract-sources/{params.contract_address}.zip"
 
             upload_to_s3(
                 self.s3_client,
                 contract_path,
-                params["contract_address"] + ".zip",
+                params.contract_address + ".zip",
                 prefix="verified-contract-sources",
             )
 
