@@ -22,12 +22,13 @@ def test_compare_source_fail(fixtures_dir, fixture):
         compare_source("source_code", "verified_jar")
 
 
-def test_error_subprocess_gradlew(fixtures_dir):
-    """Make sure our error handling is ok with subprocess calling gradlew."""
-    verified_contract_path = os.path.join(fixtures_dir, "java_contracts", "src")
-    os.chdir(verified_contract_path)
-    subprocess.call([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
-    shutil.rmtree(os.path.join(verified_contract_path, "contracts", "build"))
+# Copying in gradle now so this is not needed
+# def test_error_subprocess_gradlew(fixtures_dir):
+#     """Make sure our error handling is ok with subprocess calling gradlew."""
+#     verified_contract_path = os.path.join(fixtures_dir, "java_contracts", "src")
+#     os.chdir(verified_contract_path)
+#     subprocess.call([os.path.join(verified_contract_path, "gradlew"), "optimizedJar"])
+#     shutil.rmtree(os.path.join(verified_contract_path, "contracts", "build"))
 
 
 def test_regex_validator_verification(fixtures_dir):
