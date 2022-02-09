@@ -6,6 +6,7 @@ import zipfile
 from typing import Any
 
 from google.protobuf.json_format import MessageToJson
+from pydantic import ValidationError
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
@@ -283,7 +284,11 @@ class TransactionsWorker(Worker):
             return
 
         # params = data["params"]
-        params = VerificationInput(**data["params"])
+        try:
+            params = VerificationInput(**data["params"])
+        except ValidationError as e:
+            logger.info(f"Invalid input for contract verification {e}")
+            return
 
         # Verify that the sender is the owner address for the contract
         contract = self.session.get(Contract, params.contract_address)
