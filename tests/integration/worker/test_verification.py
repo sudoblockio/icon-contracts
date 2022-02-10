@@ -48,8 +48,8 @@ def update_gradle_dir(base_dir):
 def setup_db(db):
     with db as session:
         contract = session.get(Contract, contract_address)
-        contract.source_code_link = (source_code_link,)
-        contract.owner_address = (owner_address,)
+        contract.source_code_link = source_code_link
+        contract.owner_address = owner_address
         session.add(contract)
         session.commit()
 
