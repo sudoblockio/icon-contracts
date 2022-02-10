@@ -13,11 +13,14 @@ from icon_contracts.log import logger
 
 
 def get_source_code_head_dir(source_code_base_dir):
+    """Get the source code path which can have an extra directory in it."""
     dir_contents = os.listdir(source_code_base_dir)
     if len(dir_contents) == 1:
         return dir_contents[0]
+    elif "build.gradle" in dir_contents:
+        return "."
     else:
-        raise Exception(f"Should not have more than one dir in {source_code_base_dir}")
+        raise Exception(f"Should not have ambiguous dir in {source_code_base_dir}")
 
 
 def get_on_chain_contract_src(source_code_link) -> Optional[str]:
