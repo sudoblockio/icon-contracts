@@ -232,11 +232,11 @@ class TransactionsWorker(Worker):
             social_media = SocialMedia(**params.dict())
 
         # ignore_fields = ["source_code_location", "zipped_source_code"]
-        # for k, v in params.items():
-        #     if k not in SocialMedia.__fields__:
-        #         continue
-        #
-        #     setattr(social_media, k, v)
+        for k, v in params.dict().items():
+            if k not in SocialMedia.__fields__:
+                continue
+
+            setattr(social_media, k, v)
 
         self.session.merge(social_media)
         self.session.commit()
