@@ -50,6 +50,7 @@ def setup_db(db):
         contract = session.get(Contract, contract_address)
         if contract is None:
             contract = Contract()
+        contract.address = contract_address
         contract.source_code_link = source_code_link
         contract.owner_address = owner_address
         session.add(contract)
