@@ -72,6 +72,7 @@ class Worker(BaseModel):
     protobuf_serializer: Any = None
 
     consumer_schema: Any = None
+    check_topics: bool = True
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -115,12 +116,13 @@ class Worker(BaseModel):
             }
         )
 
-        admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
-        topics = admin_client.list_topics().topics
+        if self.check_topics:
+            admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
+            topics = admin_client.list_topics().topics
 
-        if self.topic and self.topic not in topics:
-            # Used as bare producer as well
-            raise RuntimeError(f"Topic {self.topic} not in {topics}")
+            if self.topic and self.topic not in topics:
+                # Used as bare producer as well
+                raise RuntimeError(f"Topic {self.topic} not in {topics}")
 
         self.init()
 

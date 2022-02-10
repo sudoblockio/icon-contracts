@@ -7,6 +7,7 @@ from sqlmodel import func, select
 
 from icon_contracts.api.db import get_session
 from icon_contracts.models.contracts import Contract
+from icon_contracts.models.social_media import SocialMedia
 
 router = APIRouter()
 
@@ -54,3 +55,19 @@ async def get_contract(
         return Response(status_code=HTTPStatus.NO_CONTENT.value)
 
     return contracts[0]
+
+
+@router.get("/contracts/social-media/{address}")
+async def get_contract_social_media(
+    address: str, session: AsyncSession = Depends(get_session)
+) -> List[Contract]:
+    """Return list of contracts"""
+    result = await session.execute(
+        select(SocialMedia).where(SocialMedia.contract_address == address)
+    )
+    social_media = result.scalars().all()
+
+    if len(social_media) == 0:
+        return Response(status_code=HTTPStatus.NO_CONTENT.value)
+
+    return social_media[0]

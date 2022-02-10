@@ -61,8 +61,8 @@ x-env: &env
 services:
   contracts-api:
     build:
-      context: ${GOVERNANCE_CONTEXT:-.}
-      target: ${GOVERNANCE_TARGET:-prod}
+      context: ${CONTRACTS_CONTEXT:-.}
+      target: ${CONTRACTS_TARGET:-prod}
       args:
         - SERVICE_NAME=api
     ports:
@@ -75,14 +75,15 @@ services:
     cap_add:
       - SYS_PTRACE
     volumes:
-      - ${GOVERNANCE_CONTEXT:-.}/icon_contracts:/app
+      - ${CONTRACTS_CONTEXT:-.}/icon_contracts:/app
     environment:
       <<: *env
 
   contracts-worker:
     build:
-      context: ${GOVERNANCE_CONTEXT:-.}
-      target: ${GOVERNANCE_TARGET:-prod}
+      dockerfile: Dockerfile.worker
+      context: ${CONTRACTS_CONTEXT:-.}
+      target: ${CONTRACTS_TARGET:-prod}
       args:
         - SERVICE_NAME=worker
     ports:
@@ -92,8 +93,9 @@ services:
       - "seccomp:unconfined"
     cap_add:
       - SYS_PTRACE
-    volumes:
-      - ${GOVERNANCE_CONTEXT:-.}/icon_contracts:/app
+#    volumes:
+#      - ${CONTRACTS_CONTEXT:-.}/icon_contracts:/opt
+#      - ${CONTRACTS_CONTEXT:-.}/tests:/opt/tests
     environment:
       <<: *env
 

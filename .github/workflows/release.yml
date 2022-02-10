@@ -59,7 +59,7 @@ jobs:
           ECR_REPOSITORY: icon-contracts-worker
           IMAGE_TAG: prod-${{ steps.source.outputs.TAG }}
         run: |
-          docker build --target prod --build-arg SERVICE_NAME=worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -f Dockerfile.worker --target prod --build-arg SERVICE_NAME=worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Configure AWS credentials
@@ -115,8 +115,8 @@ jobs:
         with:
           context: .
           build-args: |
-            SERVICE_NAME=api
-          file: ./Dockerfile
+            SERVICE_NAME=worker
+          file: ./Dockerfile.worker
           target: prod
           push: true
           tags: geometrylabs/icon-contracts-api:latest
@@ -126,8 +126,8 @@ jobs:
         with:
           context: .
           build-args: |
-            SERVICE_NAME=api
-          file: ./Dockerfile
+            SERVICE_NAME=worker
+          file: ./Dockerfile.worker
           target: prod
           push: true
           tags: geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}

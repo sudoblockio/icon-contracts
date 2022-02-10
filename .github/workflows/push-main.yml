@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - contract-verification
     paths-ignore:
       - 'chart/**'
 
@@ -55,7 +56,7 @@ jobs:
           ECR_REPOSITORY: icon-contracts-worker
           IMAGE_TAG: dev-${{ github.run_number }}
         run: |
-          docker build --target prod --build-arg SERVICE_NAME=worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -f Dockerfile.worker --target prod --build-arg SERVICE_NAME=worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Configure AWS credentials
@@ -105,6 +106,32 @@ jobs:
           workDir: charts
           repository: geometry-labs/icon-charts
           valueFile: 'deployments/prod-us-west-2/berlin/contracts/values.yaml'
+          propertyPath: 'worker.image.tag'
+          value: dev-${{ github.run_number }}
+          branch: main
+          createPR: 'false'
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-lisbon-us-west-2 deployment values file (API)
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-us-west-2/lisbon/contracts/values.yaml'
+          propertyPath: 'api.image.tag'
+          value: dev-${{ github.run_number }}
+          branch: main
+          createPR: 'false'
+          updateFile: true
+          commitChange: false
+
+      - name: Update prod-lisbon-us-west-2 deployment values file (WORKER)
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: geometry-labs/icon-charts
+          valueFile: 'deployments/prod-us-west-2/lisbon/contracts/values.yaml'
           propertyPath: 'worker.image.tag'
           value: dev-${{ github.run_number }}
           branch: main

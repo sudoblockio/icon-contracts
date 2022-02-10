@@ -7,10 +7,13 @@ services:
       "stream",
 #       "-s", "${START_BLOCK:-29822968}",
 #       "-s", "${START_BLOCK:-29881851}",
-       "-s", "${START_BLOCK:-40926490}",
+#       "-s", "${START_BLOCK:-40926490}",
+#      "-s", "${START_BLOCK:-31017953}", # updated
+      "-s", "${START_BLOCK:-30553699}", # created
       "-o", "kafka:9092",
       "--period-seconds", "1",
-      "--provider-uri", "https://icon.geometry-dev.net/api/v3",
+      "--provider-uri", "https://api.icon.geometry.io/api/v3",
+#      "--provider-uri", "https://berlin.net.solidwallet.io/api/v3",
 #      "-b", "100",
 #      "-B", "100",
       "--kafka-schema-registry-url", "http://schemaregistry:8081",
@@ -88,6 +91,7 @@ services:
       - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schemaregistry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://kafka:9092'
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
       SCHEMA_REGISTRY_ACCESS_CONTROL_ALLOW_ORIGIN: '*'
       SCHEMA_REGISTRY_ACCESS_CONTROL_ALLOW_METHODS: 'GET,POST,PUT,OPTIONS'
@@ -105,6 +109,22 @@ services:
       KAFKA_REST_LISTENERS: 'http://0.0.0.0:8084'
       KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schemaregistry:8081'
       KAFKA_REST_HOST_NAME: 'rest-proxy'
+
+  ksqldb-server:
+    image: confluentinc/cp-ksql-server:5.4.6
+    hostname: ksqldb-server
+    container_name: ksqldb-server
+    depends_on:
+      - kafka
+      - schemaregistry
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schemaregistry:8081"
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.5.1
