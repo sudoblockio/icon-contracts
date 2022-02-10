@@ -13,10 +13,12 @@ from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.workers.transactions import TransactionsWorker
 from icon_contracts.workers.verification import get_on_chain_contract_src
 
+contract_address = "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f"
 source_code_link = (
-    "https://berlin.tracker.solidwallet.io/score/cxdd585fff788dc1eaeb071a4cb1f18b0d76342212_1.zip"
+    # f"https://berlin.tracker.solidwallet.io/score/{contract_address}.zip"
+    f"https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/{contract_address}_1"
 )
-owner_address = "hx9e52c40a1b26342f297e25b6f225a08fd119c8af"
+owner_address = "hx37844fad06ed32738e754b205c747430a7feb81e"
 
 
 def test_on_chain_contract_src():
@@ -32,6 +34,8 @@ def test_encoding(chdir_fixtures):
     with open("src.txt", "w") as f:
         json.dump(hexdata.decode("utf-8"), f)
 
+    os.remove("src.txt")
+
     assert hexdata.decode("utf-8").startswith("0x")
 
 
@@ -42,26 +46,26 @@ def update_gradle_dir(base_dir):
 
 @pytest.fixture()
 def setup_db(db):
-    contract_address = "cxdd585fff788dc1eaeb071a4cb1f18b0d76342212"
     with db as session:
         contract = session.get(Contract, contract_address)
-        if contract is None:
-            contract = Contract(
-                address=contract_address,
-                source_code_link=source_code_link,
-                owner_address=owner_address,
-            )
-            session.add(contract)
-            session.commit()
+        contract.source_code_link = (source_code_link,)
+        contract.owner_address = (owner_address,)
+        session.add(contract)
+        session.commit()
 
 
 def test_process_verification(setup_db, db, update_gradle_dir, chdir_fixtures, caplog):
+    """
+    Validate the contract verification process by populating DB with a source code link
+    and processing a transaction with a protobuf fixture.
+    """
     os.chdir("java_contracts")
     with open("verify-schema-v1.json") as f:
         params = json.load(f)
 
     data = {"method": "verify", "params": params}
 
+    # Create a proto
     tx = TransactionRaw(
         hash="foo",
         data=json.dumps(data),

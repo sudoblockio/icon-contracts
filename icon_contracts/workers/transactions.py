@@ -324,6 +324,7 @@ class TransactionsWorker(Worker):
             # Paths
             source_code_head_dir = get_source_code_head_dir(os.path.join(tmp_path, zip_name))
             verified_contract_path = os.path.join(tmp_path, zip_name, source_code_head_dir)
+            # verified_contract_path = os.path.join(tmp_path, zip_name)
 
             # Use an official gradlew builder and wrapper
             replace_build_tool(verified_contract_path)
@@ -332,7 +333,7 @@ class TransactionsWorker(Worker):
 
             # Create the build command that will be
             process = ["./gradlew"]
-            if params.gradle_task != "":
+            if params.gradle_target != "":
                 process.append(":" + params.gradle_target + ":" + params.gradle_task)
             else:
                 process.append(params.gradle_task)

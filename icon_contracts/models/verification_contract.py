@@ -43,6 +43,12 @@ class VerificationInput(BaseModel):
         else:
             return v
 
+    @validator("gradle_task")
+    def gradle_task_populate_optimizedJar_if_empty(cls, v):
+        if v == "":
+            return "optimizedJar"
+        return v
+
     @validator("zipped_source_code")
     def starts_with_0x(cls, v):
         if not v.startswith("0x"):

@@ -16,8 +16,6 @@
 
 package io.geometry.verification;
 
-import score.Address;
-import score.Context;
 import score.annotation.External;
 import score.annotation.EventLog;
 
@@ -38,6 +36,7 @@ public class ContractVerification {
         return version;
     }
 
+//    Simple pass through so we can collect the Tx inputs
     @External
     public void verify(
             String contract_address,
@@ -59,6 +58,18 @@ public class ContractVerification {
             String github,
             String keybase,
             String wechat,
+            String gradle_target,
+            String gradle_task,
+            String source_code_location,
             String zipped_source_code
-    ) {}
+    ) {
+        VerificationVersion(this.version);
+    }
+
+    @EventLog
+    protected void VerificationVersion(
+//            Emit an event log for the version when the event happened so we can support evolving schemas
+            String version
+    ) {
+    }
 }
