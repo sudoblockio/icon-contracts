@@ -19,6 +19,7 @@ from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import (
     get_contract_name,
     get_s3_client,
+    github_release_to_dir,
     upload_to_s3,
     zip_content_to_dir,
 )
@@ -34,7 +35,6 @@ from icon_contracts.workers.verification import (
 )
 
 metrics = Metrics()
-
 
 CONTRACT_VERIFICATION_CONTRACTS = {
     "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f",  # Berlin
@@ -283,7 +283,6 @@ class TransactionsWorker(Worker):
         if data["method"] != "verify":
             return
 
-        # params = data["params"]
         try:
             params = VerificationInput(**data["params"])
         except ValidationError as e:
@@ -311,20 +310,33 @@ class TransactionsWorker(Worker):
         # chdir to /tmp/tmp<random>/
         try:
             # Unzip the source code
-            zip_name = "verified_source_code"
-            # Unzip the contents of the dict to a directory
-            contract_path = zip_content_to_dir(params.zipped_source_code, zip_name)
-            tmp_path = os.path.dirname(contract_path)
+            output_name = "verified_source_code"
+
+            # Handle sources - supporting zip within tx or refs to GH release
+            if params.zipped_source_code != "":
+                # Unzip the contents of the dict to a directory
+                logger.info(f"Processing zip for {value.hash}")
+                zip_path = zip_content_to_dir(params.zipped_source_code, output_name)
+
+                # Unzip utility that protects against zip bombs
+                contract_path = os.path.join(os.path.dirname(zip_path), output_name)
+                unzip_safe(input_zip=zip_path, output_dir=contract_path, contract_hash=value.hash)
+                tmp_path = os.path.dirname(contract_path)
+                # This step is there for ambiguous zips - ie a dir or it's head dir
+                source_code_head_dir = get_source_code_head_dir(os.path.join(tmp_path, output_name))
+                verified_contract_path = os.path.join(tmp_path, output_name, source_code_head_dir)
+
+            elif params.github_org != "":
+                logger.info(f"Processing github release for {value.hash}")
+                tmp_path, verified_contract_path = github_release_to_dir(output_name, params)
+            else:
+                logger.info(f"Unsupported verification format.")
+                return
+
             logger.info(f"Validating in {tmp_path}")
             os.chdir(tmp_path)
 
-            # Unzip utility that protects against zip bombs
-            unzip_safe(input_zip=contract_path, output_dir=zip_name, contract_hash=value.hash)
-
             # Paths
-            source_code_head_dir = get_source_code_head_dir(os.path.join(tmp_path, zip_name))
-            verified_contract_path = os.path.join(tmp_path, zip_name, source_code_head_dir)
-            # verified_contract_path = os.path.join(tmp_path, zip_name)
 
             # Use an official gradlew builder and wrapper
             replace_build_tool(verified_contract_path)
@@ -337,6 +349,7 @@ class TransactionsWorker(Worker):
                 process.append(":" + params.gradle_target + ":" + params.gradle_task)
             else:
                 process.append(params.gradle_task)
+            logger.info(f"Running gradle build command `{' '.join(process)}`")
             subprocess.run(process)
 
             # Find binary
@@ -362,7 +375,7 @@ class TransactionsWorker(Worker):
 
             upload_to_s3(
                 self.s3_client,
-                contract_path,
+                os.path.join(tmp_path, output_name),
                 params.contract_address + ".zip",
                 prefix="verified-contract-sources",
             )

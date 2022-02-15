@@ -3,13 +3,16 @@ import os
 import tempfile
 import zipfile
 from pathlib import Path
+from subprocess import PIPE, Popen
 from typing import Any
 
 import boto3
+import requests
 from botocore.exceptions import ClientError
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
+from icon_contracts.models.verification_contract import VerificationInput
 from icon_contracts.utils.rpc import icx_call
 from icon_contracts.utils.shell import run_command
 
@@ -27,6 +30,38 @@ def zip_content_to_dir(content: str, zip_name: str) -> str:
     run_command(command)
 
     return contract_path + ".zip"
+
+
+def github_release_to_dir(output_name: str, params: VerificationInput):
+    gh_base_ref = f"https://github.com/{params.github_org}/{params.github_repo}"
+    gh_release_ref = f"{gh_base_ref}/releases/tag/{params.github_release}"
+
+    # Check and see if there is a release in the location
+    # Done to prevent users from using a branch which is mutable
+    r = requests.get(gh_release_ref)
+    if r.status_code != 200:
+        raise Exception(f"Failed to clone {gh_release_ref} - non 200 code")
+
+    dirpath = tempfile.mkdtemp()
+    os.chdir(dirpath)
+
+    p = Popen(
+        ["git", "clone", gh_base_ref, "--branch", params.github_release, output_name],
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+    _, error = p.communicate()
+    if p.returncode != 0:
+        raise Exception(f"Failed to clone {gh_release_ref} with error {error}")
+
+    if params.github_directory == "":
+        return dirpath, os.path.join(dirpath, output_name)
+    else:
+        output_path = os.path.join(dirpath, output_name, params.github_directory)
+        if os.path.isdir(output_path):
+            return dirpath, output_path
+        else:
+            raise Exception(f"Cloud not clone with dir {output_path}")
 
 
 def unzip_get_sha(zip_path: str):

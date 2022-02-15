@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -47,7 +48,51 @@ BAD_TARGETS = ["bar(bar", "bar`curl ht`bar"]
 def test_regex_validator_verification_fails(target, fixtures_dir):
     """Make sure the validators don't allow more than one word."""
     with pytest.raises(ValueError):
-        v = VerificationInput(
+        VerificationInput(
             gradle_task="foo",
             gradle_target=target,
         )
+
+
+BAD_GH_REFS = ["bar(bar", "bar`curl ht`bar"]
+
+
+@pytest.mark.parametrize("target", BAD_GH_REFS)
+def test_regex_validator_verification_fails_gh(target, fixtures_dir):
+    """Make sure the validators don't allow more than one word."""
+    with pytest.raises(ValueError):
+        VerificationInput(
+            github_org=target,
+        )
+
+
+GOOD_GH_REFS = ["barbar", "bar-bar", "Bar_bar1"]
+
+
+@pytest.mark.parametrize("target", GOOD_GH_REFS)
+def test_regex_validator_verification_works(target, fixtures_dir):
+    """Make sure the validators don't allow more than one word."""
+    v = VerificationInput(github_org=target)
+
+    assert v
+
+
+GOOD_GH_RELEASES = ["v0.1.1", "v0.1.1-alpha.1"]
+
+
+@pytest.mark.parametrize("target", GOOD_GH_RELEASES)
+def test_regex_validator_verification_release_works(target, fixtures_dir):
+    """Make sure the validators don't allow more than one word."""
+    v = VerificationInput(github_release=target)
+
+    assert v
+
+
+@pytest.mark.parametrize("tx_fixture", ["zip-source-v1.json", "github-source-v1.json"])
+def test_tx_fixtures(chdir_fixtures, tx_fixture):
+    os.chdir("java_contracts")
+    with open(tx_fixture) as f:
+        params = json.load(f)
+
+    v = VerificationInput(**params)
+    assert v

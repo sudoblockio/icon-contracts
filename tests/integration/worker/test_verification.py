@@ -13,16 +13,18 @@ from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.workers.transactions import TransactionsWorker
 from icon_contracts.workers.verification import get_on_chain_contract_src
 
-contract_address = "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f"
-source_code_link = (
-    # f"https://berlin.tracker.solidwallet.io/score/{contract_address}.zip"
-    f"https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/{contract_address}_1"
-)
-owner_address = "hx37844fad06ed32738e754b205c747430a7feb81e"
+# contract_address = "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f"
+# source_code_link = (
+#     # f"https://berlin.tracker.solidwallet.io/score/{contract_address}.zip"
+#     f"https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/{contract_address}_1"
+# )
+# owner_address = "hx37844fad06ed32738e754b205c747430a7feb81e"
 
 
 def test_on_chain_contract_src():
-    assert get_on_chain_contract_src(source_code_link)
+    assert get_on_chain_contract_src(
+        "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cx0744c46c005f254e512ae6b60aacd0a9b06eda1f_1"
+    )
     shutil.rmtree("on_chain_source_code")
 
 
@@ -46,24 +48,55 @@ def update_gradle_dir(base_dir):
 
 @pytest.fixture()
 def setup_db(db):
-    with db as session:
-        contract = session.get(Contract, contract_address)
-        if contract is None:
-            contract = Contract()
-        contract.address = contract_address
-        contract.source_code_link = source_code_link
-        contract.owner_address = owner_address
-        session.add(contract)
-        session.commit()
+    def f(contract_address, source_code_link, owner_address):
+        with db as session:
+            contract = session.get(Contract, contract_address)
+            if contract is None:
+                contract = Contract()
+            contract.address = contract_address
+            contract.source_code_link = source_code_link
+            contract.owner_address = owner_address
+            session.add(contract)
+            session.commit()
+
+    return f
 
 
-def test_process_verification(setup_db, db, update_gradle_dir, chdir_fixtures, caplog):
+@pytest.mark.parametrize(
+    "tx_fixture,contract_address,source_code_link,owner_address",
+    [
+        (
+            "zip-source-v1.json",
+            "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f",  # cx_addresss
+            "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cx0744c46c005f254e512ae6b60aacd0a9b06eda1f_1",
+            "hx37844fad06ed32738e754b205c747430a7feb81e",
+        ),
+        (
+            "github-source-v1.json",
+            "cxb1e02f2bedcb3a1ad5ee913f3b7c895511f19d1c",  # cx_addresss
+            "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cxb1e02f2bedcb3a1ad5ee913f3b7c895511f19d1c_1",
+            "hx61b3ad6db9eb3e8e3c369187bffdc584227d21ed",
+        ),
+    ],
+)
+def test_process_verification(
+    tx_fixture,
+    contract_address,
+    source_code_link,
+    owner_address,
+    setup_db,
+    db,
+    update_gradle_dir,
+    chdir_fixtures,
+    caplog,
+):
     """
     Validate the contract verification process by populating DB with a source code link
     and processing a transaction with a protobuf fixture.
     """
+    setup_db(contract_address, source_code_link, owner_address)
     os.chdir("java_contracts")
-    with open("verify-schema-v1.json") as f:
+    with open(tx_fixture) as f:
         params = json.load(f)
 
     data = {"method": "verify", "params": params}
