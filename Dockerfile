@@ -15,7 +15,6 @@ RUN apt-get -y --no-install-recommends install \
     gcc \
     xxd \
     unzip \
-    git \
   && apt-get clean
 
 COPY ./requirements_$SERVICE_NAME.txt .

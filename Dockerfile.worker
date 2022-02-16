@@ -17,6 +17,7 @@ RUN apt-get -y --no-install-recommends install \
     unzip \
     ca-certificates-java \
     openjdk-11-jre-headless \
+    git \
   && apt-get clean
 
 
