@@ -21,8 +21,8 @@ Contract verification is the process from which additional metadata about a cont
 #### Contract Verification Contracts
 
 - Mainnet: ``
-- Berlin: `cx0744c46c005f254e512ae6b60aacd0a9b06eda1f`
-- Lisbon: `cxd7a4b4e228708e23682184e94046c6e812a971cd`
+- Berlin: `cx4a574176f82852487b547126b7a59874f5599acd`
+- Lisbon: `cx59fd09b8fd87ad82961c29c4ff5e44773f629330`
 
 #### Preparing Java Source Code
 

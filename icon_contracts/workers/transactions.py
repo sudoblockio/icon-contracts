@@ -37,8 +37,8 @@ from icon_contracts.workers.verification import (
 metrics = Metrics()
 
 CONTRACT_VERIFICATION_CONTRACTS = {
-    "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f",  # Berlin
-    "cxd7a4b4e228708e23682184e94046c6e812a971cd",  # Lisbon
+    "cx4a574176f82852487b547126b7a59874f5599acd",  # Berlin
+    "cx59fd09b8fd87ad82961c29c4ff5e44773f629330",  # Lisbon
 }
 
 
