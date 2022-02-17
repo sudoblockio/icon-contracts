@@ -329,14 +329,15 @@ class TransactionsWorker(Worker):
             elif params.github_org != "":
                 logger.info(f"Processing github release for {value.hash}")
                 tmp_path, verified_contract_path = github_release_to_dir(output_name, params)
+                shutil.make_archive(
+                    os.path.join(tmp_path, output_name), "zip", verified_contract_path
+                )
             else:
                 logger.info(f"Unsupported verification format.")
                 return
 
             logger.info(f"Validating in {tmp_path}")
             os.chdir(tmp_path)
-
-            # Paths
 
             # Use an official gradlew builder and wrapper
             replace_build_tool(verified_contract_path)
@@ -375,7 +376,7 @@ class TransactionsWorker(Worker):
 
             upload_to_s3(
                 self.s3_client,
-                os.path.join(tmp_path, output_name),
+                os.path.join(tmp_path, output_name) + ".zip",
                 params.contract_address + ".zip",
                 prefix="verified-contract-sources",
             )

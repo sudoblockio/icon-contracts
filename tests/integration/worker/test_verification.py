@@ -6,19 +6,11 @@ import shutil
 import pytest
 
 from icon_contracts.config import settings
-from icon_contracts.log import logger
 from icon_contracts.models.contracts import Contract
 from icon_contracts.models.social_media import SocialMedia
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.workers.transactions import TransactionsWorker
 from icon_contracts.workers.verification import get_on_chain_contract_src
-
-# contract_address = "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f"
-# source_code_link = (
-#     # f"https://berlin.tracker.solidwallet.io/score/{contract_address}.zip"
-#     f"https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/{contract_address}_1"
-# )
-# owner_address = "hx37844fad06ed32738e754b205c747430a7feb81e"
 
 
 def test_on_chain_contract_src():
