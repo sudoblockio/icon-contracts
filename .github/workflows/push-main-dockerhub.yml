@@ -116,7 +116,7 @@ jobs:
         with:
           workDir: charts
           repository: sudoblockio/icon-charts
-          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/values.yaml'
+          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
           propertyPath: 'api.image.tag'
           value: ${{needs.docker.outputs.tag}}
           branch: main
@@ -129,7 +129,7 @@ jobs:
         with:
           workDir: charts
           repository: sudoblockio/icon-charts
-          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/values.yaml'
+          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
           propertyPath: 'worker.image.tag'
           value: ${{needs.docker.outputs.tag}}
           branch: main
