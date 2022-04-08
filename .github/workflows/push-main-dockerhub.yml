@@ -145,6 +145,7 @@ jobs:
 
       - name: Commit all updates
         run: |
+          git pull
           git add -A
           git commit -m "contracts ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment image version to ${{needs.docker.outputs.tag}}"
           git push origin
