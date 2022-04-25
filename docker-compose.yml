@@ -47,7 +47,7 @@ x-env: &env
 
 services:
   contracts-api:
-    image: sudoblock/icon-contracts:latest
+    image: sudoblock/icon-contracts-api:latest
     ports:
       - "8000:8000"
     expose:
@@ -63,7 +63,7 @@ services:
       <<: *env
 
   contracts-worker:
-    image: sudoblock/icon-contracts:latest
+    image: sudoblock/icon-contracts-worker:latest
     ports:
       - "8181:8181"     # Health
       - "9401:9401"     # Prometheus
