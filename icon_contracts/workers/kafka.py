@@ -1,8 +1,17 @@
 from time import sleep
 from typing import Any
 
-from confluent_kafka import Consumer, KafkaError, Message, Producer, TopicPartition
+from confluent_kafka import (
+    Consumer,
+    KafkaError,
+    Message,
+    Producer,
+    SerializingProducer,
+    TopicPartition,
+)
 from confluent_kafka.admin import AdminClient
+from confluent_kafka.schema_registry.protobuf import ProtobufSerializer
+from confluent_kafka.serialization import StringSerializer
 from loguru import logger
 from pydantic import BaseModel
 
@@ -84,6 +93,27 @@ class Worker(BaseModel):
         # # Producers
         # # Json producer for dead letter queues
         self.json_producer = Producer({"bootstrap.servers": self.kafka_server})
+
+        # # If using schema registry use this
+        # self.schema_registry_client = SchemaRegistryClient({"url": settings.SCHEMA_REGISTRY_URL})
+        # self.protobuf_serializer = ProtobufSerializer(
+        #     ContractProcessed,
+        #     self.schema_registry_client,
+        #     conf={
+        #         "auto.register.schemas": True,
+        #         "use.deprecated.format": True,
+        #     },
+        # )
+        # self.protobuf_producer = SerializingProducer(
+        #     {
+        #         "bootstrap.servers": self.kafka_server,
+        #         "key.serializer": StringSerializer("utf_8"),
+        #         "value.serializer": self.protobuf_serializer,
+        #     }
+        # )
+
+        # Without schema registry this is fine
+        self.protobuf_producer = self.json_producer
 
         if self.check_topics:
             admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
