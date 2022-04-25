@@ -16,7 +16,6 @@ from icon_contracts.models.social_media import SocialMedia
 from icon_contracts.models.verification_contract import VerificationInput
 from icon_contracts.schemas.block_etl_pb2 import BlockETL, LogETL, TransactionETL
 from icon_contracts.schemas.contract_proto import contract_to_proto
-from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import (
     get_contract_name,
     get_s3_client,
@@ -53,14 +52,14 @@ class TransactionsWorker(Worker):
     partition_dict: dict = None
 
     # Metrics
-    msg_count: int = 0
     contracts_created_python: int = 0
     contracts_updated_python: int = 0
 
     msg: Any = None
 
+    block: Type[BlockETL] = None
     transaction: Type[TransactionETL] = None
-    log: LogETL = None
+    log: Type[LogETL] = None
 
     def process_contract(self, content: str):
         """
@@ -306,7 +305,7 @@ class TransactionsWorker(Worker):
 
         if contract.owner_address != self.transaction.from_address:
             logger.info(
-                f"Contract verification Tx from {self.transaction.from_address} to {params.contract_address} not from owner with Tx hash {value.hash}"
+                f"Contract verification Tx from {self.transaction.from_address} to {params.contract_address} not from owner with Tx hash {self.transaction.hash}"
             )
             return
 
@@ -427,32 +426,16 @@ class TransactionsWorker(Worker):
                     logger.info("Exiting.")
                     sys.exit(0)
 
-        if self.msg_count % 100000 == 0:
+        if self.msg_count % 100 == 0:
             logger.info(
                 f"msg count {self.msg_count} and block {self.block.number} "
                 f"for consumer group {self.consumer_group}"
             )
-        self.msg_count += 1
 
     def process_transaction(self):
-
-        # value = msg.value()
-
-        # if value.to_address == "None":
-        #     return
-
-        if self.transaction.to_address == "":
-            return
-
         # Pass on any invalid Tx in this service
-        # if value.receipt_status != 1:
-        #     return
-        if self.transaction.status != "0x1":
+        if self.transaction.to_address == "" or self.transaction.status != "0x1":
             return
-
-        # Logic that handles backfills so that they do not continue to consume records
-        # past the offset that the job was set off at.
-        # self.handle_msg_count(msg=msg, value=value)
 
         # Handle audit process
         if self.transaction.to_address == settings.one_address:
@@ -486,6 +469,7 @@ class TransactionsWorker(Worker):
                 return
 
     def process(self):
+        self.block.ParseFromString(self.msg.value())
         # Logic that handles backfills so that they do not continue to consume records
         # past the offset that the job was set off at.
         self.handle_msg_count()
