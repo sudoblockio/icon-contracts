@@ -13,7 +13,6 @@ x-env: &env
   REST_PREFIX: "/api/v1"
   HEALTH_PREFIX: "/health"
   METRICS_PREFIX: "/metrics"
-
   CORS_ALLOW_ORIGINS: "*"
 
   # Monitoring
@@ -48,11 +47,7 @@ x-env: &env
 
 services:
   contracts-api:
-    build:
-      context: ${CONTRACTS_CONTEXT:-.}
-      target: ${CONTRACTS_TARGET:-prod}
-      args:
-        - SERVICE_NAME=api
+    image: sudoblock/icon-contracts:latest
     ports:
       - "8000:8000"
     expose:
@@ -68,12 +63,7 @@ services:
       <<: *env
 
   contracts-worker:
-    build:
-      dockerfile: Dockerfile.worker
-      context: ${CONTRACTS_CONTEXT:-.}
-      target: ${CONTRACTS_TARGET:-prod}
-      args:
-        - SERVICE_NAME=worker
+    image: sudoblock/icon-contracts:latest
     ports:
       - "8181:8181"     # Health
       - "9401:9401"     # Prometheus
@@ -81,8 +71,5 @@ services:
       - "seccomp:unconfined"
     cap_add:
       - SYS_PTRACE
-#    volumes:
-#      - ${CONTRACTS_CONTEXT:-.}/icon_contracts:/opt
-#      - ${CONTRACTS_CONTEXT:-.}/tests:/opt/tests
     environment:
       <<: *env

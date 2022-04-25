@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  contracts-api:
+    build:
+      context: ${CONTRACTS_CONTEXT:-.}
+      target: ${CONTRACTS_TARGET:-prod}
+      args:
+        - SERVICE_NAME=api
+
+  contracts-worker:
+    build:
+      dockerfile: Dockerfile.worker
+      context: ${CONTRACTS_CONTEXT:-.}
+      target: ${CONTRACTS_TARGET:-prod}
+      args:
+        - SERVICE_NAME=worker
+#    volumes:
+#      - ${CONTRACTS_CONTEXT:-.}/icon_contracts:/opt
+#      - ${CONTRACTS_CONTEXT:-.}/tests:/opt/tests
