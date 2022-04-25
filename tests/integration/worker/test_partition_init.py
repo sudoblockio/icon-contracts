@@ -18,7 +18,7 @@ def backfill_job(db):
             session.execute(sql)
             session.commit()
 
-            num_msgs = 100000
+            num_msgs = 1000
             for i in range(0, 12):
                 sql = (
                     f"INSERT INTO kafka_jobs (job_id, worker_group, topic, partition, stop_offset) VALUES "
@@ -40,7 +40,7 @@ def test_get_current_offset(db, backfill_job):
         consumer_group, partition_dict = get_current_offset(session)
 
     assert consumer_group
-    assert partition_dict[("transactions", 0)] == 1000
+    assert partition_dict[("blocks", 0)] == 1000
 
 
 # def test_transactions_worker_tail(db, backfill_job):

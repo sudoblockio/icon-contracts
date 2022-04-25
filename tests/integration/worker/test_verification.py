@@ -8,7 +8,9 @@ import pytest
 from icon_contracts.config import settings
 from icon_contracts.models.contracts import Contract
 from icon_contracts.models.social_media import SocialMedia
-from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
+
+# from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
+from icon_contracts.schemas.block_etl_pb2 import BlockETL, TransactionETL
 from icon_contracts.workers.transactions import TransactionsWorker
 from icon_contracts.workers.verification import get_on_chain_contract_src
 
@@ -94,7 +96,10 @@ def test_process_verification(
     data = {"method": "verify", "params": params}
 
     # Create a proto
-    tx = TransactionRaw(
+    block = BlockETL(
+        number=10000,
+    )
+    tx = TransactionETL(
         hash="foo",
         data=json.dumps(data),
         from_address=owner_address,
@@ -103,12 +108,14 @@ def test_process_verification(
     with db as session:
         tx_worker = TransactionsWorker(
             session=session,
-            topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
+            topic=settings.CONSUMER_TOPIC_BLOCKS,
             consumer_group="foo",
             auto_offset_reset="earliest",
             check_topics=False,
         )
-        tx_worker.process_verification(value=tx)
+        tx_worker.block = block
+        tx_worker.transaction = tx
+        tx_worker.process_verification()
 
         social_media = session.get(SocialMedia, params["contract_address"])
 
