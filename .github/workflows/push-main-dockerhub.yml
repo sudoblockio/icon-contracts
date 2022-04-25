@@ -58,14 +58,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push API
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           target: prod
           push: true
-          tags: sudoblock/icon-contracts:latest, sudoblock/icon-contracts:${{ steps.source.outputs.TAG }}
+          tags: sudoblock/icon-contracts-api:latest, sudoblock/icon-contracts-api:${{ steps.source.outputs.TAG }}
+
+      - name: Build and push worker
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile.worker
+          target: prod
+          push: true
+          tags: sudoblock/icon-contracts-worker:latest, sudoblock/icon-contracts-worker:${{ steps.source.outputs.TAG }}
 
   push_refs:
     runs-on: ubuntu-latest
