@@ -40,7 +40,7 @@ def get_current_offset(session):
 class Worker(BaseModel):
     name: str = None
     # schema_registry_url: str = settings.SCHEMA_REGISTRY_URL
-    schema_registry_client: Any = None
+    # schema_registry_client: Any = None
     sleep_seconds: float = 0.25
 
     session: Any = None

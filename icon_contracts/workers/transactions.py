@@ -57,7 +57,7 @@ class TransactionsWorker(Worker):
 
     msg: Any = None
 
-    block: Type[BlockETL] = None
+    block: Type[BlockETL] = BlockETL()
     transaction: Type[TransactionETL] = None
     log: Type[LogETL] = None
 
@@ -469,7 +469,10 @@ class TransactionsWorker(Worker):
                 return
 
     def process(self):
-        self.block.ParseFromString(self.msg.value())
+        value = self.msg.value()
+        if value is None:
+            return
+        self.block.ParseFromString(value)
         # Logic that handles backfills so that they do not continue to consume records
         # past the offset that the job was set off at.
         self.handle_msg_count()
