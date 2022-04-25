@@ -62,6 +62,57 @@ def icx_getBlockByHeight():
     return post_rpc(payload)
 
 
-# if __name__ == '__main__':
+def icx_getBalance(address: str):
+    payload = {
+        "jsonrpc": "2.0",
+        "method": "icx_getBalance",
+        "id": 1234,
+        "params": {"address": address},
+    }
+    return post_rpc(payload)
+
+
+def getBonderList(address: str):
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1234,
+        "method": "icx_call",
+        "params": {
+            "to": "cx0000000000000000000000000000000000000000",
+            "dataType": "call",
+            "data": {
+                "method": "getBonderList",
+                "params": {
+                    "address": address,
+                },
+            },
+        },
+    }
+    return post_rpc(payload)
+
+
+def getBond(address: str):
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1234,
+        "method": "icx_call",
+        "params": {
+            "to": "cx0000000000000000000000000000000000000000",
+            "dataType": "call",
+            "data": {
+                "method": "getBond",
+                "params": {
+                    "address": address,
+                },
+            },
+        },
+    }
+    return post_rpc(payload)
+
+
+# if __name__ == "__main__":
+#     x = icx_getBalance("hxb86afed8db896012664b0fa6c874fe0e3001edaf").json()
+#     x = getBonderList("hx0b047c751658f7ce1b2595da34d57a0e7dad357d").json()
+#     x = getBond("hx0b047c751658f7ce1b2595da34d57a0e7dad357d").json()
 #     x = icx_getBlockByHeight().json()
 #     print(x)
