@@ -65,7 +65,7 @@ jobs:
           file: ./Dockerfile
           target: prod
           push: true
-          tags: sudoblock/icon-extractor:latest, sudoblock/icon-extractor:${{ steps.source.outputs.TAG }}
+          tags: sudoblock/icon-contracts:latest, sudoblock/icon-contracts:${{ steps.source.outputs.TAG }}
 
   push_refs:
     runs-on: ubuntu-latest
@@ -126,11 +126,11 @@ jobs:
         with:
           workDir: charts
           repository: sudoblockio/icon-charts
-          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/extractor/tags.yaml'
+          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
           propertyPath: 'image.tag'
           value: ${{needs.docker.outputs.tag}}
           branch: main
           createPR: 'false'
           updateFile: true
-          message: "extractor ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment image version to ${{needs.docker.outputs.tag}}"
+          message: "contracts ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment image version to ${{needs.docker.outputs.tag}}"
           token: '${{ secrets.ICON_CHARTS_PAT }}'
