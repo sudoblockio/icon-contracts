@@ -50,13 +50,6 @@ x-env: &env
   # Endpoints
   MAX_PAGE_SIZE: "100"
 
-  # Redis
-  REDIS_HOST: "redis"
-  REDIS_PORT: "6379"
-  REDIS_PASSWORD: ""
-  REDIS_CHANNEL: "contracts"
-  REDIS_SENTINEL_CLIENT_MODE: "false"
-  REDIS_SENTINEL_CLIENT_MASTER_NAME: "master"
 
 services:
   contracts-api:

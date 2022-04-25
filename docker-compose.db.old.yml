@@ -1,47 +1,27 @@
 version: "3.7"
 
-x-extractor-env: &extractor-env
-  # API
-  API_PORT: "8080"
-
-  START_CLAIM_EXTRACTORS: "false"
-  START_HEAD_EXTRACTOR: "true"
-  HEAD_EXTRACTOR_START_BLOCK: "30553699"
-  INSERT_EXTRACTOR_JOB: "false"
-  ICON_NODE_SERVICE_MAX_BATCH_SIZE: 1
-
-  # Logging
-  LOG_LEVEL: "DEBUG"
-  LOG_FORMAT: "console"
-
-  # Icon node service
-#  ICON_NODE_SERVICE_URL: "http://66.42.108.184:9000/api/v3" # Mainnet
-  ICON_NODE_SERVICE_URL: "https://ctz.solidwallet.io/api/v3" # Mainnet
-
-  # Kafka
-  KAFKA_BROKER_URL: "kafka:9092"
-  KAFKA_BLOCKS_TOPIC: "blocks"
-  KAFKA_PRODUCER_PARTITIONS: "1"
-  KAFKA_DEAD_MESSAGE_TOPIC: "icon-mainnet-blocks-v2-dead"
-
-  # Postgres
-  DB_DRIVER: "postgres"
-  DB_HOST: ${POSTGRES_HOST:-postgres}
-  DB_PORT: "5432"
-  DB_USER: ${POSTGRES_USER:-postgres}
-  DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-  DB_DBNAME: ${POSTGRES_DB:-postgres}
-  DB_SSL_MODE: "disable"
-  DB_TIMEZONE: "UTC"
-
 services:
   etl:
-    image: sudoblock/icon-extractor:${ICON_ETL_TAG:-latest}
+    image: geometrylabs/iconetl:${ICON_ETL_TAG:-latest}
+    command: [
+      "stream",
+#       "-s", "${START_BLOCK:-29822968}",
+#       "-s", "${START_BLOCK:-29881851}",
+#       "-s", "${START_BLOCK:-40926490}",
+#      "-s", "${START_BLOCK:-31017953}", # updated
+      "-s", "${START_BLOCK:-30553699}", # created
+      "-o", "kafka:9092",
+      "--period-seconds", "1",
+      "--provider-uri", "https://api.icon.geometry.io/api/v3",
+#      "--provider-uri", "https://berlin.net.solidwallet.io/api/v3",
+#      "-b", "100",
+#      "-B", "100",
+      "--kafka-schema-registry-url", "http://schemaregistry:8081",
+      "--kafka-use-schema-registry", "true",
+    ]
     restart: on-failure
     depends_on:
       - kafka
-    environment:
-      <<: *extractor-env
 
   ############
   # Database #
@@ -79,7 +59,6 @@ services:
       - zookeeper
     ports:
       - "29092:29092"
-      - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 0
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
