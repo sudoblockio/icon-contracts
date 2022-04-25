@@ -1,34 +1,12 @@
 from time import sleep
 from typing import Any
 
-from confluent_kafka import (
-    Consumer,
-    DeserializingConsumer,
-    KafkaError,
-    Message,
-    Producer,
-    SerializingProducer,
-    TopicPartition,
-)
+from confluent_kafka import Consumer, KafkaError, Message, Producer, TopicPartition
 from confluent_kafka.admin import AdminClient
-from confluent_kafka.schema_registry import SchemaRegistryClient
-from confluent_kafka.schema_registry.protobuf import (
-    ProtobufDeserializer,
-    ProtobufSerializer,
-)
-from confluent_kafka.serialization import (
-    IntegerDeserializer,
-    StringDeserializer,
-    StringSerializer,
-)
 from loguru import logger
 from pydantic import BaseModel
 
 from icon_contracts.config import settings
-
-# from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
-from icon_contracts.schemas.block_etl_pb2 import BlockETL
-from icon_contracts.schemas.contract_processed_pb2 import ContractProcessed
 
 
 def get_current_offset(session):
@@ -59,9 +37,6 @@ def get_current_offset(session):
         return r[1], output
 
 
-from typing import Type
-
-
 class Worker(BaseModel):
     name: str = None
     # schema_registry_url: str = settings.SCHEMA_REGISTRY_URL
@@ -75,6 +50,7 @@ class Worker(BaseModel):
     auto_offset_reset: str = "earliest"
 
     topic: str = None
+    msg_count: int = 0
 
     consumer: Any = None
     json_producer: Any = None
@@ -82,7 +58,6 @@ class Worker(BaseModel):
     protobuf_producer: Any = None
     protobuf_serializer: Any = None
 
-    block: Type[BlockETL] = None
     msg: Message = None
 
     consumer_schema: Any = None
@@ -95,23 +70,6 @@ class Worker(BaseModel):
         super().__init__(**data)
         if self.name is None:
             self.name = self.topic
-
-        self.block = BlockETL()
-
-        # self.consumer = DeserializingConsumer(
-        #     {
-        #         "bootstrap.servers": self.kafka_server,
-        #         "group.id": self.consumer_group,
-        #         "key.deserializer": StringDeserializer("utf_8"),
-        #         # "key.deserializer": IntegerDeserializer(),
-        #         "queued.max.messages.kbytes": "100MB",
-        #         "value.deserializer": ProtobufDeserializer(
-        #             message_type=BlockETL, conf={"use.deprecated.format": True}
-        #         ),
-        #         # Offset determined by worker type head (latest) or tail (earliest)
-        #         "auto.offset.reset": self.auto_offset_reset,
-        #     }
-        # )
 
         self.consumer = Consumer(
             {
@@ -126,25 +84,6 @@ class Worker(BaseModel):
         # # Producers
         # # Json producer for dead letter queues
         self.json_producer = Producer({"bootstrap.servers": self.kafka_server})
-        #
-        # self.schema_registry_client = SchemaRegistryClient({"url": settings.SCHEMA_REGISTRY_URL})
-        #
-        # self.protobuf_serializer = ProtobufSerializer(
-        #     ContractProcessed,
-        #     self.schema_registry_client,
-        #     conf={
-        #         "auto.register.schemas": True,
-        #         "use.deprecated.format": True,
-        #     },
-        # )
-        #
-        # self.protobuf_producer = SerializingProducer(
-        #     {
-        #         "bootstrap.servers": self.kafka_server,
-        #         "key.serializer": StringSerializer("utf_8"),
-        #         "value.serializer": self.protobuf_serializer,
-        #     }
-        # )
 
         if self.check_topics:
             admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
@@ -155,14 +94,6 @@ class Worker(BaseModel):
                 raise RuntimeError(f"Topic {self.topic} not in {topics}")
 
         self.init()
-
-    # @staticmethod
-    # def deserialize(byte_message, proto_type):
-    #     module_, class_ = proto_type.rsplit('.', 1)
-    #     class_ = getattr(import_module(module_), class_)
-    #     rv = class_()
-    #     rv.ParseFromString(byte_message)
-    #     return rv
 
     def produce_json(self, topic, key, value):
         try:
@@ -213,8 +144,7 @@ class Worker(BaseModel):
                 continue
             else:
                 self.msg = msg
-                self.block.ParseFromString(msg.value())
-                # self.process(msg)
+                self.msg_count += 1
                 self.process()
 
         # Flush the last of the messages
