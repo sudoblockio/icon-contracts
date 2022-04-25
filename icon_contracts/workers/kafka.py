@@ -1,17 +1,12 @@
 from time import sleep
 from typing import Any
 
-from confluent_kafka import (
-    Consumer,
-    KafkaError,
-    Message,
-    Producer,
-    SerializingProducer,
-    TopicPartition,
-)
+from confluent_kafka import Consumer, KafkaError, Message, Producer, TopicPartition
 from confluent_kafka.admin import AdminClient
-from confluent_kafka.schema_registry.protobuf import ProtobufSerializer
-from confluent_kafka.serialization import StringSerializer
+
+# from confluent_kafka import SerializingProducer
+# from confluent_kafka.schema_registry.protobuf import ProtobufSerializer
+# from confluent_kafka.serialization import StringSerializer
 from loguru import logger
 from pydantic import BaseModel
 
