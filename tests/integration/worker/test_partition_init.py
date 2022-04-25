@@ -18,11 +18,12 @@ def backfill_job(db):
             session.execute(sql)
             session.commit()
 
+            num_msgs = 100000
             for i in range(0, 12):
                 sql = (
                     f"INSERT INTO kafka_jobs (job_id, worker_group, topic, partition, stop_offset) VALUES "
                     f"('{job_id}','{settings.CONSUMER_GROUP}-{job_id}',"
-                    f"'{settings.CONSUMER_TOPIC_TRANSACTIONS}','{i}','{1000}');"
+                    f"'{settings.CONSUMER_TOPIC_BLOCKS}','{i}','{num_msgs}');"
                 )
                 session.execute(sql)
                 session.commit()
@@ -43,7 +44,10 @@ def test_get_current_offset(db, backfill_job):
 
 
 # def test_transactions_worker_tail(db, backfill_job):
-#     settings.JOB_ID = "test6"
+#     import random
+#     import string
+#     # settings.JOB_ID = "test3"
+#     settings.JOB_ID = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
 #     backfill_job(settings.JOB_ID)
 #
 #     with db as session:

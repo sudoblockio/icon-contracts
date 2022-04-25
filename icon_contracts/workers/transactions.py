@@ -14,6 +14,7 @@ from icon_contracts.metrics import Metrics
 from icon_contracts.models.contracts import Contract
 from icon_contracts.models.social_media import SocialMedia
 from icon_contracts.models.verification_contract import VerificationInput
+from icon_contracts.schemas.block_etl_pb2 import BlockETL, LogETL, TransactionETL
 from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.schemas.transaction_raw_pb2 import TransactionRaw
 from icon_contracts.utils.contract_content import (
@@ -42,6 +43,8 @@ CONTRACT_VERIFICATION_CONTRACTS = {
     "cx59fd09b8fd87ad82961c29c4ff5e44773f629330",  # Lisbon
 }
 
+from typing import Type
+
 
 class TransactionsWorker(Worker):
     # Need to pipe this in due to bug in boto
@@ -54,33 +57,36 @@ class TransactionsWorker(Worker):
     contracts_created_python: int = 0
     contracts_updated_python: int = 0
 
-    def process_contract(self, content: str, value: TransactionRaw):
+    msg: Any = None
+
+    transaction: Type[TransactionETL] = None
+    log: LogETL = None
+
+    def process_contract(self, content: str):
         """
         Process the contract by checking its status in the DB and uploading the
         source to S3 and including a download link in the DB.
         """
-        tx_result = icx_getTransactionResult(value.hash).json()["result"]
+        tx_result = icx_getTransactionResult(self.transaction.hash).json()["result"]
 
         address = tx_result["scoreAddress"]
-        timestamp = int(value.timestamp, 16)
+        # timestamp = self.transaction.timestamp
 
         # Check if there is a contract in the DB with that address otherwise create it
         contract = self.session.get(Contract, address)
 
         if contract is None:
             # In order process
-            logger.info(
-                f"Creating new contract address = {address} at block = {value.block_number}"
-            )
+            logger.info(f"Creating new contract address = {address} at block = {self.block.number}")
             contract = Contract(
                 address=address,
                 name=get_contract_name(address),
-                owner_address=value.from_address,
-                last_updated_block=value.block_number,
+                owner_address=self.transaction.from_address,
+                last_updated_block=self.block.number,
                 # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
-                created_block=value.block_number,
-                created_timestamp=timestamp,
-                creation_hash=value.hash,
+                created_block=self.block.number,
+                created_timestamp=self.transaction.timestamp,
+                creation_hash=self.transaction.hash,
             )
             self.session.merge(contract)
             self.session.commit()
@@ -89,10 +95,10 @@ class TransactionsWorker(Worker):
         # Checking last_updated_timestamp case for when we see a contract approval
         # event before we see the contract submission
         if (
-            value.block_number > contract.last_updated_block
+            self.block.number > contract.last_updated_block
             or contract.last_updated_timestamp is None
         ):
-            logger.info(f"Updating contract address = {address} at block = {value.block_number}")
+            logger.info(f"Updating contract address = {address} at block = {self.block.number}")
             self.contracts_updated_python += 1
             metrics.contracts_created_python.set(self.contracts_updated_python)
 
@@ -114,8 +120,8 @@ class TransactionsWorker(Worker):
                 logger.info(f"Skip uploading tx")
 
             contract.name = get_contract_name(contract.address)
-            contract.last_updated_block = value.block_number
-            contract.last_updated_timestamp = timestamp
+            contract.last_updated_block = self.block.number
+            contract.last_updated_timestamp = self.transaction.timestamp
 
             # Method that classifies the contract based on ABI for IRC2 stuff
             contract.extract_contract_details()
@@ -126,22 +132,22 @@ class TransactionsWorker(Worker):
 
         # Condition where we have already updated the record
         if (
-            value.block_number <= contract.last_updated_block
+            self.block.number <= contract.last_updated_block
             or contract.last_updated_timestamp is None
         ):
             logger.info(
-                f"Updating contract creation for address = {address} at block = {value.block_number}"
+                f"Updating contract creation for address = {address} at block = {self.block.number}"
             )
-            contract.created_block = value.block_number
-            contract.created_timestamp = timestamp
-            contract.creation_hash = value.hash
+            contract.created_block = self.block.number
+            contract.created_timestamp = self.transaction.timestamp
+            contract.creation_hash = self.transaction.hash
 
         # Produce the record so adjacent services can find out about new contracts as
         # this is the only service that actually inspects the ABI and classifies the
         # contracts.  So far only (10/21) `icon-addresses` is using this topic.
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
-            value.hash,  # Keyed on hash
+            self.transaction.hash,  # Keyed on hash
             # Convert the pydantic object to proto
             contract_to_proto(contract),
         )
@@ -150,27 +156,27 @@ class TransactionsWorker(Worker):
         self.session.merge(contract)
         self.session.commit()
 
-    def process_audit(self, value: TransactionRaw):
-        data = json.loads(value.data)
+    def process_audit(self):
+        data = json.loads(self.transaction.data)
 
         # Contract creation events
         if "contentType" in data:
-            logger.info(f"Unknown event for with hash = {value.hash}")
+            logger.info(f"Unknown event for with hash = {self.transaction.hash}")
             # No idea what is going on here.
             self.produce_json(
                 topic=settings.PRODUCER_TOPIC_DLQ,
                 key="unknown-event-content-type",
-                value=MessageToJson(value),
+                value=MessageToJson(self.transaction),
             )
             self.json_producer.poll(0)
             return
 
         if "method" not in data:
-            logger.info(f"No method found in audit hash {value.hash}")
+            logger.info(f"No method found in audit hash {self.transaction.hash}")
             return
 
         if data["method"] not in ["acceptScore", "rejectScore"]:
-            logger.info(f"Method not supported in audit hash {value.hash}")
+            logger.info(f"Method not supported in audit hash {self.transaction.hash}")
             return
 
         # # Audit related events
@@ -188,7 +194,7 @@ class TransactionsWorker(Worker):
 
         if contract is None:
             logger.info(
-                f"Creating contract from approval for address = {address} at block = {value.block_number}"
+                f"Creating contract from approval for address = {address} at block = {self.transaction.block_number}"
             )
             self.contracts_created_python += 1
             metrics.contracts_created_python.set(self.contracts_created_python)
@@ -196,7 +202,7 @@ class TransactionsWorker(Worker):
                 address=address,
                 name=get_contract_name(address),
                 status=status,
-                owner_address=value.from_address,
+                owner_address=self.transaction.from_address,
                 # We deal with update dates based on submission due to 2.0 dropping audit
                 last_updated_block=0,
             )
@@ -205,11 +211,11 @@ class TransactionsWorker(Worker):
         # Checking last_updated_timestamp case for when we see a contract approval
         # event before we see the contract submission
         if (
-            value.block_number > contract.last_updated_block
+            self.block.number > contract.last_updated_block
             or contract.last_updated_timestamp is None
         ):
             logger.info(
-                f"Updating contract status from approval for address = {address} at block = {value.block_number}"
+                f"Updating contract status from approval for address = {address} at block = {self.block.number}"
             )
             self.contracts_updated_python += 1
             metrics.contracts_created_python.set(self.contracts_updated_python)
@@ -218,7 +224,7 @@ class TransactionsWorker(Worker):
 
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
-            value.hash,  # Keyed on hash
+            self.transaction.hash,  # Keyed on hash
             contract_to_proto(contract),
         )
 
@@ -242,7 +248,7 @@ class TransactionsWorker(Worker):
         self.session.merge(social_media)
         self.session.commit()
 
-    def process_verification(self, value):
+    def process_verification(self):
         """
         Process contract verifications. Only runs txs to the contract verification
         contract which adheres to a schema that we can control.
@@ -276,7 +282,7 @@ class TransactionsWorker(Worker):
         if not settings.ENABLE_CONTRACT_VERIFICATION:
             return
 
-        data = json.loads(value.data)
+        data = json.loads(self.transaction.data)
 
         if "method" not in data or "params" not in data:
             return
@@ -294,13 +300,13 @@ class TransactionsWorker(Worker):
         contract = self.session.get(Contract, params.contract_address)
         if contract is None:
             logger.info(
-                f"Contract verification Tx to {params.contract_address} not found with Tx hash {value.hash}"
+                f"Contract verification Tx to {params.contract_address} not found with Tx hash {self.transaction.hash}"
             )
             return
 
-        if contract.owner_address != value.from_address:
+        if contract.owner_address != self.transaction.from_address:
             logger.info(
-                f"Contract verification Tx from {value.from_address} to {params.contract_address} not from owner with Tx hash {value.hash}"
+                f"Contract verification Tx from {self.transaction.from_address} to {params.contract_address} not from owner with Tx hash {value.hash}"
             )
             return
 
@@ -316,19 +322,23 @@ class TransactionsWorker(Worker):
             # Handle sources - supporting zip within tx or refs to GH release
             if params.zipped_source_code != "":
                 # Unzip the contents of the dict to a directory
-                logger.info(f"Processing zip for {value.hash}")
+                logger.info(f"Processing zip for {self.transaction.hash}")
                 zip_path = zip_content_to_dir(params.zipped_source_code, output_name)
 
                 # Unzip utility that protects against zip bombs
                 contract_path = os.path.join(os.path.dirname(zip_path), output_name)
-                unzip_safe(input_zip=zip_path, output_dir=contract_path, contract_hash=value.hash)
+                unzip_safe(
+                    input_zip=zip_path,
+                    output_dir=contract_path,
+                    contract_hash=self.transaction.hash,
+                )
                 tmp_path = os.path.dirname(contract_path)
                 # This step is there for ambiguous zips - ie a dir or it's head dir
                 source_code_head_dir = get_source_code_head_dir(os.path.join(tmp_path, output_name))
                 verified_contract_path = os.path.join(tmp_path, output_name, source_code_head_dir)
 
             elif params.github_org != "":
-                logger.info(f"Processing github release for {value.hash}")
+                logger.info(f"Processing github release for {self.transaction.hash}")
                 tmp_path, verified_contract_path = github_release_to_dir(output_name, params)
                 shutil.make_archive(
                     os.path.join(tmp_path, output_name), "zip", verified_contract_path
@@ -358,7 +368,7 @@ class TransactionsWorker(Worker):
             os.chdir(tmp_path)
             binary_path = os.path.join(verified_contract_path, params.source_code_location)
             if not os.path.exists(binary_path):
-                logger.info(f"Binary not found in {binary_path} for {value.hash}")
+                logger.info(f"Binary not found in {binary_path} for {self.transaction.hash}")
                 return
 
             # Unzip the optimized jar so that we can inspect each file
@@ -370,7 +380,7 @@ class TransactionsWorker(Worker):
 
             # Compare binary to what is on-chain
             compare_source(on_chain_src_dir, "verified_jar")
-            logger.info(f"Successfully compared {value.hash}")
+            logger.info(f"Successfully compared {self.transaction.hash}")
 
             # Get the optimized jar file name
             link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/verified-contract-sources/{params.contract_address}.zip"
@@ -391,21 +401,21 @@ class TransactionsWorker(Worker):
             shutil.rmtree(tmp_path)
             logger.info(f"Uploaded contract to {contract.verified_source_code_link}")
         except Exception as e:
-            logger.info(f"Unable verify contract - {value.hash} - {e}")
+            logger.info(f"Unable verify contract - {self.transaction.hash} - {e}")
             if settings.CONTRACT_VERIFICATION_CLEANUP and tmp_path is not None:
                 if os.path.exists(tmp_path):
                     shutil.rmtree(os.path.dirname(tmp_path))
 
-    def handle_msg_count(self, msg=None, value=None):
+    def handle_msg_count(self):
         # Logic that handles backfills so that they do not continue to consume records
         # past the offset that the job was set off at.
         if self.partition_dict is not None:
             if self.msg_count % 1000 == 0:
-                end_offset = self.partition_dict[(self.topic, msg.partition())]
+                end_offset = self.partition_dict[(self.topic, self.msg.partition())]
                 offset = [
                     i.offset
                     for i in self.get_offset_per_partition()
-                    if i.partition == msg.partition() and i.topic == self.topic
+                    if i.partition == self.msg.partition() and i.topic == self.topic
                 ][0]
 
                 logger.info(f"offset={offset} and end={end_offset}")
@@ -419,44 +429,49 @@ class TransactionsWorker(Worker):
 
         if self.msg_count % 100000 == 0:
             logger.info(
-                f"msg count {self.msg_count} and block {value.block_number} "
+                f"msg count {self.msg_count} and block {self.block.number} "
                 f"for consumer group {self.consumer_group}"
             )
         self.msg_count += 1
 
-    def process(self, msg):
+    def process_transaction(self):
 
-        value = msg.value()
+        # value = msg.value()
 
-        if value.to_address == "None":
+        # if value.to_address == "None":
+        #     return
+
+        if self.transaction.to_address == "":
             return
 
         # Pass on any invalid Tx in this service
-        if value.receipt_status != 1:
+        # if value.receipt_status != 1:
+        #     return
+        if self.transaction.status != "0x1":
             return
 
         # Logic that handles backfills so that they do not continue to consume records
         # past the offset that the job was set off at.
-        self.handle_msg_count(msg=msg, value=value)
+        # self.handle_msg_count(msg=msg, value=value)
 
         # Handle audit process
-        if value.to_address == settings.one_address:
-            self.process_audit(value)
+        if self.transaction.to_address == settings.one_address:
+            self.process_audit()
 
         # Handle verification process
-        if value.to_address in CONTRACT_VERIFICATION_CONTRACTS:
-            self.process_verification(value)
+        if self.transaction.to_address in CONTRACT_VERIFICATION_CONTRACTS:
+            self.process_verification()
 
         # Need to check the data field if there is a json payload otherwise we are not
         # interested in it in this context
-        if str(value.data) != "null":
+        if str(self.transaction.data) != "":
             try:
-                data = json.loads(value.data)
+                data = json.loads(self.transaction.data)
             except Exception:
                 self.produce_json(
                     topic=settings.PRODUCER_TOPIC_DLQ,
                     key="unknown-event-content-type",
-                    value=MessageToJson(value),
+                    value=MessageToJson(self.transaction),
                 )
                 return
         else:
@@ -466,9 +481,22 @@ class TransactionsWorker(Worker):
             # These are contract creation Txs
             if "contentType" in data:
                 if data["contentType"] in ["application/zip", "application/java"]:
-                    logger.info(f"Handling contract creation hash {value.hash}.")
-                    self.process_contract(data["content"], value)
+                    logger.info(f"Handling contract creation hash {self.transaction.hash}.")
+                    self.process_contract(data["content"])
                 return
+
+    def process(self):
+        # Logic that handles backfills so that they do not continue to consume records
+        # past the offset that the job was set off at.
+        self.handle_msg_count()
+
+        if len(self.block.transactions) == 1:
+            # If only one Tx, there were no real Txs in a block besides block mint
+            return
+
+        for i in self.block.transactions:
+            self.transaction = i
+            self.process_transaction()
 
 
 def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
@@ -476,7 +504,7 @@ def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
         kafka = TransactionsWorker(
             s3_client=get_s3_client(),
             session=session,
-            topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
+            topic=settings.CONSUMER_TOPIC_BLOCKS,
             consumer_group=consumer_group + "-head",
             auto_offset_reset="latest",
         )
@@ -489,7 +517,7 @@ def transactions_worker_tail(consumer_group, partition_dict):
             partition_dict=partition_dict,
             s3_client=get_s3_client(),
             session=session,
-            topic=settings.CONSUMER_TOPIC_TRANSACTIONS,
+            topic=settings.CONSUMER_TOPIC_BLOCKS,
             consumer_group=consumer_group,
             auto_offset_reset="earliest",
         )
