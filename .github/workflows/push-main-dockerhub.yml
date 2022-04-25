@@ -3,7 +3,7 @@ name: push-main-dockerhub
 on:
   push:
     branches:
-      - main
+      - v2
 
 jobs:
   test:
