@@ -64,7 +64,7 @@ from typing import Type
 
 class Worker(BaseModel):
     name: str = None
-    schema_registry_url: str = settings.SCHEMA_REGISTRY_URL
+    # schema_registry_url: str = settings.SCHEMA_REGISTRY_URL
     schema_registry_client: Any = None
     sleep_seconds: float = 0.25
 

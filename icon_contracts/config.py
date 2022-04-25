@@ -41,7 +41,7 @@ class Settings(BaseSettings):
 
     # Kafka
     KAFKA_BROKER_URL: str = "localhost:29092"
-    SCHEMA_REGISTRY_URL: str = "http://localhost:8081"
+    # SCHEMA_REGISTRY_URL: str = "http://localhost:8081"
 
     # KAFKA_GROUP_ID: str = "contracts"
     CONSUMER_IS_TAIL: bool = False
