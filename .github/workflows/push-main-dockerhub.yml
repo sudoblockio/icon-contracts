@@ -121,13 +121,26 @@ jobs:
           path: charts
           token: ${{ secrets.ICON_CHARTS_PAT }}
 
-      - name: Update ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment values file
+      - name: Update API ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment values file
         uses: fjogeleit/yaml-update-action@master
         with:
           workDir: charts
           repository: sudoblockio/icon-charts
           valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
-          propertyPath: 'image.tag'
+          propertyPath: 'api.image.tag'
+          value: ${{needs.docker.outputs.tag}}
+          branch: main
+          createPR: 'false'
+          updateFile: true
+          commitChange: false
+
+      - name: Update worker ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment values file
+        uses: fjogeleit/yaml-update-action@master
+        with:
+          workDir: charts
+          repository: sudoblockio/icon-charts
+          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
+          propertyPath: 'worker.image.tag'
           value: ${{needs.docker.outputs.tag}}
           branch: main
           createPR: 'false'
