@@ -193,7 +193,7 @@ class TransactionsWorker(Worker):
 
         if contract is None:
             logger.info(
-                f"Creating contract from approval for address = {address} at block = {self.transaction.block_number}"
+                f"Creating contract from approval for address = {address} at block = {self.block.number}"
             )
             self.contracts_created_python += 1
             metrics.contracts_created_python.set(self.contracts_created_python)
