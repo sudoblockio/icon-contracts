@@ -12,25 +12,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install deps
-        run: |
-          pip3 install -r requirements_api.txt -r requirements_worker.txt -r requirements_dev.txt
-          pip3 install --upgrade protobuf
-
-      - name: Bring up stack
-        run: make up-dbs && sleep 30
-
-      - name: Check stack
-        run: make ps
-
-      - name: Run tests with coverage
-        run: make test-coverage
-
-      - uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          fail_ci_if_error: true
+#      - name: Install deps
+#        run: |
+#          pip3 install -r requirements_api.txt -r requirements_worker.txt -r requirements_dev.txt
+#          pip3 install --upgrade protobuf
+#
+#      - name: Bring up stack
+#        run: make up-dbs && sleep 30
+#
+#      - name: Check stack
+#        run: make ps
+#
+#      - name: Run tests with coverage
+#        run: make test-coverage
+#
+#      - uses: codecov/codecov-action@v2
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          files: ./coverage.xml
+#          fail_ci_if_error: true
 
   docker:
     runs-on: ubuntu-latest
