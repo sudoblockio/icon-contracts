@@ -123,20 +123,20 @@ class Worker(BaseModel):
     def produce_json(self, topic, key, value):
         try:
             # https://github.com/confluentinc/confluent-kafka-python/issues/137#issuecomment-282427382
-            self.json_producer.produce(topic=topic, value=value, key=key)
+            self.json_producer.produce(topic=topic, value=value.SerializeToString(), key=key)
             self.json_producer.poll(0)
         except BufferError:
             self.json_producer.poll(1)
-            self.json_producer.produce(topic=topic, value=value, key=key)
+            self.json_producer.produce(topic=topic, value=value.SerializeToString(), key=key)
         self.json_producer.flush()
 
     def produce_protobuf(self, topic, key, value):
         try:
-            self.protobuf_producer.produce(topic=topic, value=value, key=key)
+            self.protobuf_producer.produce(topic=topic, value=value.SerializeToString(), key=key)
             self.protobuf_producer.poll(0)
         except BufferError:
             self.protobuf_producer.poll(1)
-            self.protobuf_producer.produce(topic=topic, value=value, key=key)
+            self.protobuf_producer.produce(topic=topic, value=value.SerializeToString(), key=key)
         self.protobuf_producer.flush()
 
     def start(self):
