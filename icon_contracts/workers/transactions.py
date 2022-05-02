@@ -493,7 +493,7 @@ def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
             session=session,
             topic=settings.CONSUMER_TOPIC_BLOCKS,
             consumer_group=consumer_group + "-head",
-            auto_offset_reset="latest",
+            auto_offset_reset=settings.CONSUMER_GROUP_HEAD_OFFSET_RESET,
         )
         kafka.start()
 
