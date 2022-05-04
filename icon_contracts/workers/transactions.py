@@ -411,11 +411,11 @@ class TransactionsWorker(Worker):
             return
 
         # Handle audit process
-        if self.transaction.to_address == settings.one_address:
+        elif self.transaction.to_address == settings.one_address:
             self.process_audit()
 
         # Handle verification process
-        if self.transaction.to_address in CONTRACT_VERIFICATION_CONTRACTS:
+        elif self.transaction.to_address in CONTRACT_VERIFICATION_CONTRACTS:
             self.process_verification()
 
         # Need to check the data field if there is a json payload otherwise we are not
@@ -449,10 +449,6 @@ class TransactionsWorker(Worker):
         # Logic that handles backfills so that they do not continue to consume records
         # past the offset that the job was set off at.
         self.handle_msg_count()
-
-        if len(self.block.transactions) == 1:
-            # If only one Tx, there were no real Txs in a block besides block mint
-            return
 
         for i in self.block.transactions:
             self.transaction = i
