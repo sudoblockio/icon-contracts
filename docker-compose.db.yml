@@ -118,35 +118,6 @@ services:
       SCHEMA_REGISTRY_ACCESS_CONTROL_ALLOW_METHODS: 'GET,POST,PUT,OPTIONS'
       SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
 
-  rest-proxy:
-    image: confluentinc/cp-kafka-rest:${CP_KAFKA_REST_TAG:-latest}
-    hostname: rest-proxy
-    depends_on:
-      - kafka
-      - schemaregistry
-    environment:
-      KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_REST_BOOTSTRAP_SERVERS: 'kafka:9092'
-      KAFKA_REST_LISTENERS: 'http://0.0.0.0:8084'
-      KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schemaregistry:8081'
-      KAFKA_REST_HOST_NAME: 'rest-proxy'
-
-  ksqldb-server:
-    image: confluentinc/cp-ksql-server:5.4.6
-    hostname: ksqldb-server
-    container_name: ksqldb-server
-    depends_on:
-      - kafka
-      - schemaregistry
-    ports:
-      - "8088:8088"
-    environment:
-      KSQL_LISTENERS: "http://0.0.0.0:8088"
-      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
-      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schemaregistry:8081"
-      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
-      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
-
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.5.1
     hostname: control-center
