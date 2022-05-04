@@ -49,8 +49,6 @@ class TransactionsWorker(Worker):
     # Need to pipe this in due to bug in boto
     s3_client: Any = None
 
-    partition_dict: dict = None
-
     # Metrics
     contracts_created_python: int = 0
     contracts_updated_python: int = 0
@@ -220,6 +218,8 @@ class TransactionsWorker(Worker):
             metrics.contracts_created_python.set(self.contracts_updated_python)
 
             contract.status = status
+            contract.last_updated_block = self.block.number
+            contract.last_updated_timestamp = self.transaction.timestamp
 
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
@@ -405,33 +405,6 @@ class TransactionsWorker(Worker):
                 if os.path.exists(tmp_path):
                     shutil.rmtree(os.path.dirname(tmp_path))
 
-    def handle_msg_count(self):
-        # Logic that handles backfills so that they do not continue to consume records
-        # past the offset that the job was set off at.
-        if self.partition_dict is not None:
-            if self.msg_count % 1000 == 0:
-                end_offset = self.partition_dict[(self.topic, self.msg.partition())]
-                offset = [
-                    i.offset
-                    for i in self.get_offset_per_partition()
-                    if i.partition == self.msg.partition() and i.topic == self.topic
-                ][0]
-
-                logger.info(f"offset={offset} and end={end_offset}")
-
-                if offset > end_offset:
-                    logger.info(f"Reached end of job at offset={offset} and end={end_offset}")
-                    import sys
-
-                    logger.info("Exiting.")
-                    sys.exit(0)
-
-        if self.msg_count % 100 == 0:
-            logger.info(
-                f"msg count {self.msg_count} and block {self.block.number} "
-                f"for consumer group {self.consumer_group}"
-            )
-
     def process_transaction(self):
         # Pass on any invalid Tx in this service
         if self.transaction.to_address == "" or self.transaction.status != "0x1":
@@ -493,7 +466,7 @@ def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
             session=session,
             topic=settings.CONSUMER_TOPIC_BLOCKS,
             consumer_group=consumer_group + "-head",
-            auto_offset_reset=settings.CONSUMER_GROUP_HEAD_OFFSET_RESET,
+            auto_offset_reset=settings.CONSUMER_AUTO_OFFSET_RESET,
         )
         kafka.start()
 
