@@ -48,14 +48,9 @@ class Settings(BaseSettings):
     JOB_ID: str = None
     CONSUMER_GROUP: str = "contracts"
     # Change this to "earliest" + CONSUMER_GROUP to trigger a manual backfill
-    CONSUMER_GROUP_HEAD_OFFSET_RESET: str = "latest"
-
-    # CONSUMER_GROUP_HEAD: str = "contracts-head"
-    # CONSUMER_GROUP_TAIL: str = "contracts-tail"
+    CONSUMER_AUTO_OFFSET_RESET: str = "latest"
 
     CONSUMER_TOPIC_BLOCKS: str = "blocks"
-    # CONSUMER_TOPIC_TRANSACTIONS: str = "transactions"
-    # CONSUMER_TOPIC_LOGS: str = "logs"
 
     PRODUCER_TOPIC_DLQ: str = "contracts-worker-dlq"
     PRODUCER_TOPIC_CONTRACTS: str = "contracts-processed"

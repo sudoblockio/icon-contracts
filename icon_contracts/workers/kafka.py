@@ -48,6 +48,7 @@ class Worker(BaseModel):
     sleep_seconds: float = 0.25
 
     session: Any = None
+    partition_dict: dict = None
 
     kafka_server: str = settings.KAFKA_BROKER_URL
     consumer_group: str = None
@@ -191,3 +192,27 @@ class Worker(BaseModel):
     def process(self):
         """Overridable process that processes each message."""
         pass
+
+    def handle_msg_count(self):
+        # Logic that handles backfills so that they do not continue to consume records
+        # past the offset that the job was set off at.
+        if self.partition_dict is not None:
+            if self.msg_count % 1000 == 0:
+                end_offset = self.partition_dict[(self.topic, self.msg.partition())]
+                offset = [
+                    i.offset
+                    for i in self.get_offset_per_partition()
+                    if i.partition == self.msg.partition() and i.topic == self.topic
+                ][0]
+
+                logger.info(f"offset={offset} and end={end_offset}")
+
+                if offset > end_offset:
+                    logger.info(f"Reached end of job at offset={offset} and end={end_offset}")
+                    import sys
+
+                    logger.info("Exiting.")
+                    sys.exit(0)
+
+        if self.msg_count % 100 == 0:
+            logger.info(f"msg count {self.msg_count} for consumer group {self.consumer_group}")
