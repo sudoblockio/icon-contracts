@@ -142,7 +142,7 @@ class TransactionsWorker(Worker):
         # Produce the record so adjacent services can find out about new contracts as
         # this is the only service that actually inspects the ABI and classifies the
         # contracts.  So far only (10/21) `icon-addresses` is using this topic.
-        self.produce_json(
+        self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
             # Convert the pydantic object to proto
