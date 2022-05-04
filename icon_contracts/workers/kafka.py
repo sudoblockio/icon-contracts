@@ -90,27 +90,6 @@ class Worker(BaseModel):
         # # Json producer for dead letter queues
         self.json_producer = Producer({"bootstrap.servers": self.kafka_server})
 
-        # # If using schema registry use this
-        # self.schema_registry_client = SchemaRegistryClient({"url": settings.SCHEMA_REGISTRY_URL})
-        # self.protobuf_serializer = ProtobufSerializer(
-        #     ContractProcessed,
-        #     self.schema_registry_client,
-        #     conf={
-        #         "auto.register.schemas": True,
-        #         "use.deprecated.format": True,
-        #     },
-        # )
-        # self.protobuf_producer = SerializingProducer(
-        #     {
-        #         "bootstrap.servers": self.kafka_server,
-        #         "key.serializer": StringSerializer("utf_8"),
-        #         "value.serializer": self.protobuf_serializer,
-        #     }
-        # )
-
-        # Without schema registry this is fine
-        self.protobuf_producer = self.json_producer
-
         if self.check_topics:
             admin_client = AdminClient({"bootstrap.servers": self.kafka_server})
             topics = admin_client.list_topics().topics
@@ -130,15 +109,6 @@ class Worker(BaseModel):
             self.json_producer.poll(1)
             self.json_producer.produce(topic=topic, value=value, key=key)
         self.json_producer.flush()
-
-    def produce_protobuf(self, topic, key, value):
-        try:
-            self.protobuf_producer.produce(topic=topic, value=value.SerializeToString(), key=key)
-            self.protobuf_producer.poll(0)
-        except BufferError:
-            self.protobuf_producer.poll(1)
-            self.protobuf_producer.produce(topic=topic, value=value.SerializeToString(), key=key)
-        self.protobuf_producer.flush()
 
     def start(self):
         self.consumer.subscribe([self.topic])
