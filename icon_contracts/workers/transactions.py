@@ -146,7 +146,7 @@ class TransactionsWorker(Worker):
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
             # Convert the pydantic object to proto
-            contract_to_proto(contract),
+            contract_to_proto(contract, contract_updated_block=self.block.number),
         )
 
         # Commit the contract
@@ -183,7 +183,7 @@ class TransactionsWorker(Worker):
 
         status = None
         if data["method"] == "acceptScore":
-            status = "Accepted"
+            status = "Active"
         elif data["method"] == "rejectScore":
             status = "Rejected"
 

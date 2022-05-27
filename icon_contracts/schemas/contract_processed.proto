@@ -6,4 +6,5 @@ message ContractProcessed {
     int64 created_timestamp = 3;
     string status = 4;
     bool is_token = 5;
+    int64 contract_updated_block = 6;
 }

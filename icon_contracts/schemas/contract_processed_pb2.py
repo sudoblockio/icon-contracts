@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     syntax="proto3",
     serialized_options=None,
     serialized_pb=_b(
-        '\n\x18\x63ontract_processed.proto"o\n\x11\x43ontractProcessed\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x19\n\x11\x63reated_timestamp\x18\x03 \x01(\x03\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x10\n\x08is_token\x18\x05 \x01(\x08\x62\x06proto3'
+        '\n\x18\x63ontract_processed.proto"\x8f\x01\n\x11\x43ontractProcessed\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x19\n\x11\x63reated_timestamp\x18\x03 \x01(\x03\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x10\n\x08is_token\x18\x05 \x01(\x08\x12\x1e\n\x16\x63ontract_updated_block\x18\x06 \x01(\x03\x62\x06proto3'
     ),
 )
 
@@ -122,6 +122,24 @@ _CONTRACTPROCESSED = _descriptor.Descriptor(
             serialized_options=None,
             file=DESCRIPTOR,
         ),
+        _descriptor.FieldDescriptor(
+            name="contract_updated_block",
+            full_name="ContractProcessed.contract_updated_block",
+            index=5,
+            number=6,
+            type=3,
+            cpp_type=2,
+            label=1,
+            has_default_value=False,
+            default_value=0,
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR,
+        ),
     ],
     extensions=[],
     nested_types=[],
@@ -131,8 +149,8 @@ _CONTRACTPROCESSED = _descriptor.Descriptor(
     syntax="proto3",
     extension_ranges=[],
     oneofs=[],
-    serialized_start=28,
-    serialized_end=139,
+    serialized_start=29,
+    serialized_end=172,
 )
 
 DESCRIPTOR.message_types_by_name["ContractProcessed"] = _CONTRACTPROCESSED
