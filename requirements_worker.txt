@@ -7,9 +7,10 @@ loguru==0.5.3
 prometheus_client==0.11.0
 
 grpcio==1.40.0
-protobuf
-confluent_kafka
 
+# Temporary breaking change
+protobuf~=3.21.0
+confluent_kafka
 psycopg2-binary
 alembic==1.7.1
 asyncpg==0.24.0
