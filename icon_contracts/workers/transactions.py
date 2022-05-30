@@ -224,7 +224,7 @@ class TransactionsWorker(Worker):
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
-            contract_to_proto(contract),
+            contract_to_proto(contract, self.block.number),
         )
 
         self.session.merge(contract)
