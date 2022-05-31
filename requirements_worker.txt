@@ -9,7 +9,7 @@ prometheus_client==0.11.0
 grpcio==1.40.0
 
 # Temporary breaking change
-protobuf~=3.21.0
+protobuf~=3.20.1
 confluent_kafka
 psycopg2-binary
 alembic==1.7.1
