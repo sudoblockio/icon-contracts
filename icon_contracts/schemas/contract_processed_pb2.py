@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x18\x63ontract_processed.proto"\x8f\x01\n\x11\x43ontractProcessed\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x19\n\x11\x63reated_timestamp\x18\x03 \x01(\x03\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x10\n\x08is_token\x18\x05 \x01(\x08\x12\x1e\n\x16\x63ontract_updated_block\x18\x06 \x01(\x03\x62\x06proto3'
+    b'\n\x18\x63ontract_processed.proto"\x9d\x01\n\x11\x43ontractProcessed\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\x12\x11\n\x04name\x18\x02 \x01(\tH\x00\x88\x01\x01\x12\x19\n\x11\x63reated_timestamp\x18\x03 \x01(\x03\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x10\n\x08is_token\x18\x05 \x01(\x08\x12\x1e\n\x16\x63ontract_updated_block\x18\x06 \x01(\x03\x42\x07\n\x05_nameb\x06proto3'
 )
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
@@ -22,5 +22,5 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
     DESCRIPTOR._options = None
     _CONTRACTPROCESSED._serialized_start = 29
-    _CONTRACTPROCESSED._serialized_end = 172
+    _CONTRACTPROCESSED._serialized_end = 186
 # @@protoc_insertion_point(module_scope)
