@@ -5,14 +5,17 @@ from typing import List, Optional
 from sqlalchemy.orm import declared_attr
 from sqlmodel import BIGINT, JSON, Column, Field, SQLModel
 
-from icon_contracts.core.classifier import is_irc2
+from icon_contracts.core import (
+    IRC2_METHODS,
+    IRC3_METHODS,
+    IRC31_METHODS,
+    contract_classifier,
+)
 from icon_contracts.log import logger
 from icon_contracts.utils.rpc import icx_call, icx_getScoreApi
 
 
 class Contract(SQLModel, table=True):
-    # __tablename__ = "contracts"  # type: ignore
-
     address: str = Field(primary_key=True)
 
     name: Optional[str] = Field(None, index=False)
@@ -22,24 +25,6 @@ class Contract(SQLModel, table=True):
 
     email: Optional[str] = Field(None, index=False)
     website: Optional[str] = Field(None, index=False)
-
-    # team_name: Optional[str] = Field(None, index=False)
-    # short_description: Optional[str] = Field(None, index=False)
-    # long_description: Optional[str] = Field(None, index=False)
-    # p_rep_address: Optional[str] = Field(None, index=False)
-    # city: Optional[str] = Field(None, index=False)
-    # country: Optional[str] = Field(None, index=False)
-    # license: Optional[str] = Field(None, index=False)
-    # facebook: Optional[str] = Field(None, index=False)
-    # telegram: Optional[str] = Field(None, index=False)
-    # reddit: Optional[str] = Field(None, index=False)
-    # discord: Optional[str] = Field(None, index=False)
-    # steemit: Optional[str] = Field(None, index=False)
-    # twitter: Optional[str] = Field(None, index=False)
-    # youtube: Optional[str] = Field(None, index=False)
-    # github: Optional[str] = Field(None, index=False)
-    # keybase: Optional[str] = Field(None, index=False)
-    # wechat: Optional[str] = Field(None, index=False)
 
     last_updated_block: Optional[int] = Field(None, index=True)
     last_updated_timestamp: Optional[int] = Field(None, sa_column=Column(BIGINT), index=True)
@@ -68,6 +53,7 @@ class Contract(SQLModel, table=True):
     )
 
     is_token: Optional[bool] = Field(False, index=True)
+    is_nft: Optional[bool] = Field(False, index=True)
 
     @declared_attr
     def __tablename__(cls) -> str:  # noqa: N805
@@ -87,13 +73,21 @@ class Contract(SQLModel, table=True):
         except Exception:
             logger.info(f"Error getting name from contract {self.address}")
 
-        if is_irc2(self.abi, self.address):
+        # IRC 2
+        if contract_classifier(self.abi, IRC2_METHODS):
             self.contract_type = "IRC2"
             self.symbol = icx_call(self.address, {"method": "symbol"}).json()["result"]
             self.decimals = icx_call(self.address, {"method": "decimals"}).json()["result"]
             self.is_token = True
 
+        # IRC 3
+        if contract_classifier(self.abi, IRC3_METHODS):
+            self.contract_type = "IRC3"
+            self.is_token = True
+            self.is_nft = True
 
-#
-# class ContractListRead(Contract):
-#
+        # IRC 31
+        if contract_classifier(self.abi, IRC31_METHODS):
+            self.contract_type = "IRC31"
+            self.is_token = True
+            self.is_nft = True
