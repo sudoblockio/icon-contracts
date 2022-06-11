@@ -1,5 +1,3 @@
-# Debug https://github.com/sudoblockio/icon-contracts/issues/1
-faulthandler
 
 nanoid==2.0.0
 
