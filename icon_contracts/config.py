@@ -1,8 +1,9 @@
+import os
+
 from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-
     NAME: str = "contracts"
     NETWORK_NAME: str = "mainnet"
 
@@ -35,7 +36,7 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "string"
 
     # ICON Nodes
-    ICON_NODE_URL = "https://api.icon.geometry.io/api/v3"
+    ICON_NODE_URL = "https://api.icon.community/api/v3"
     # ICON_NODE_URL: str = "https://berlin.net.solidwallet.io/api/v3"
     BACKUP_ICON_NODE_URL = "https://ctz.solidwallet.io/api/v3"
 
@@ -97,4 +98,7 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 
-settings = Settings()
+if os.environ.get("ENV_FILE", False):
+    settings = Settings(_env_file=os.environ.get("ENV_FILE"))
+else:
+    settings = Settings()
