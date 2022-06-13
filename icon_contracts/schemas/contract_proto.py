@@ -23,7 +23,11 @@ def contract_to_proto(
     if contract_db.status is not None:
         contract_proto.status = contract_db.status
 
+    if contract_db.token_standard is not None:
+        contract_proto.token_standard = contract_db.token_standard
+
     contract_proto.contract_updated_block = contract_updated_block
     contract_proto.is_token = contract_db.is_token
+    contract_proto.contract_type = contract_db.contract_type
 
     return contract_proto

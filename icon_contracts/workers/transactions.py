@@ -3,7 +3,7 @@ import os
 import shutil
 import subprocess
 import zipfile
-from typing import Any
+from typing import Any, Type
 
 from google.protobuf.json_format import MessageToJson
 from pydantic import ValidationError
@@ -42,8 +42,6 @@ CONTRACT_VERIFICATION_CONTRACTS = {
     "cx59fd09b8fd87ad82961c29c4ff5e44773f629330",  # Lisbon
 }
 
-from typing import Type
-
 
 class TransactionsWorker(Worker):
     # Need to pipe this in due to bug in boto
@@ -54,20 +52,43 @@ class TransactionsWorker(Worker):
     contracts_updated_python: int = 0
 
     msg: Any = None
+    data: dict = None
 
     block: Type[BlockETL] = BlockETL()
     transaction: Type[TransactionETL] = None
     log: Type[LogETL] = None
+
+    def upload_contract_source(self, contract, content):
+        # If we have access credentials this is not None
+        if self.s3_client:
+
+            # Increment the revision number
+            contract.revision_number += 1
+            zip_name = f"{contract.address}_{contract.revision_number}"
+            # Unzip the contents of the dict to a directory
+            contract_path = zip_content_to_dir(content, zip_name)
+            # Upload to
+            upload_to_s3(self.s3_client, contract_path, zip_name)
+            contract.source_code_link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/contract-sources/{zip_name}"
+            # Cleanup
+            shutil.rmtree(os.path.dirname(contract_path))
+            logger.info(f"Uploaded contract to {contract.source_code_link}")
+        else:
+            logger.info(f"Skip uploading tx")
 
     def process_contract(self, content: str):
         """
         Process the contract by checking its status in the DB and uploading the
         source to S3 and including a download link in the DB.
         """
-        tx_result = icx_getTransactionResult(self.transaction.hash).json()["result"]
+        r = icx_getTransactionResult(self.transaction.hash)
+        if r is not None:
+            tx_result = r.json()["result"]
+        else:
+            logger.info(f"Failed getting tx hash {self.transaction.hash}")
+            return
 
         address = tx_result["scoreAddress"]
-        # timestamp = self.transaction.timestamp
 
         # Check if there is a contract in the DB with that address otherwise create it
         contract = self.session.get(Contract, address)
@@ -88,7 +109,15 @@ class TransactionsWorker(Worker):
             self.session.merge(contract)
             self.session.commit()
 
-        # Out of order processes
+        if self.data["contentType"] == "application/zip":
+            contract.contract_type = "python"
+            contract.status = "Pending"
+        elif self.data["contentType"] == "application/java":
+            contract.contract_type = "java"
+            contract.status = "Active"
+        else:
+            raise Exception(f"Don't know contentType {self.data['contentType']}")
+
         # Checking last_updated_timestamp case for when we see a contract approval
         # event before we see the contract submission
         if (
@@ -99,22 +128,8 @@ class TransactionsWorker(Worker):
             self.contracts_updated_python += 1
             metrics.contracts_created_python.set(self.contracts_updated_python)
 
-            # If we have access credentials this is not None
-            if self.s3_client:
-
-                # Increment the revision number
-                contract.revision_number = +1
-                zip_name = f"{contract.address}_{contract.revision_number}"
-                # Unzip the contents of the dict to a directory
-                contract_path = zip_content_to_dir(content, zip_name)
-                # Upload to
-                upload_to_s3(self.s3_client, contract_path, zip_name)
-                contract.source_code_link = f"https://{settings.CONTRACTS_S3_BUCKET}.s3.us-west-2.amazonaws.com/contract-sources/{zip_name}"
-                # Cleanup
-                shutil.rmtree(os.path.dirname(contract_path))
-                logger.info(f"Uploaded contract to {contract.source_code_link}")
-            else:
-                logger.info(f"Skip uploading tx")
+            # Upload to s3
+            self.upload_contract_source(contract, content)
 
             contract.name = get_contract_name(contract.address)
             contract.last_updated_block = self.block.number
@@ -139,9 +154,12 @@ class TransactionsWorker(Worker):
             contract.created_timestamp = self.transaction.timestamp
             contract.creation_hash = self.transaction.hash
 
+            # Upload to s3
+            self.upload_contract_source(contract, content)
+
         # Produce the record so adjacent services can find out about new contracts as
         # this is the only service that actually inspects the ABI and classifies the
-        # contracts.  So far only (10/21) `icon-addresses` is using this topic.
+        # contracts.
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
@@ -422,7 +440,7 @@ class TransactionsWorker(Worker):
         # interested in it in this context
         if str(self.transaction.data) != "":
             try:
-                data = json.loads(self.transaction.data)
+                self.data = json.loads(self.transaction.data)
             except Exception:
                 self.produce_json(
                     topic=settings.PRODUCER_TOPIC_DLQ,
@@ -433,12 +451,12 @@ class TransactionsWorker(Worker):
         else:
             return
 
-        if data is not None:
+        if self.data is not None:
             # These are contract creation Txs
-            if "contentType" in data:
-                if data["contentType"] in ["application/zip", "application/java"]:
+            if "contentType" in self.data:
+                if self.data["contentType"] in ["application/zip", "application/java"]:
                     logger.info(f"Handling contract creation hash {self.transaction.hash}.")
-                    self.process_contract(data["content"])
+                    self.process_contract(self.data["content"])
                 return
 
     def process(self):
