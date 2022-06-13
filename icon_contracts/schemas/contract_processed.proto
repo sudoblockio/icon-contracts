@@ -2,11 +2,11 @@ syntax = "proto3";
 
 message ContractProcessed {
     string address = 1;
-    optional string name = 2;
+    string name = 2;
     int64 created_timestamp = 3;
     string status = 4;
     bool is_token = 5;
     int64 contract_updated_block = 6;
     string contract_type = 7;
-    optional string token_standard = 8;
+    string token_standard = 8;
 }
