@@ -58,14 +58,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push API
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          target: prod
-          push: true
-          tags: sudoblock/icon-contracts-api:latest, sudoblock/icon-contracts-api:${{ steps.source.outputs.TAG }}
+#      - name: Build and push API
+#        uses: docker/build-push-action@v2
+#        with:
+#          context: .
+#          file: ./Dockerfile
+#          target: prod
+#          push: true
+#          tags: sudoblock/icon-contracts-api:latest, sudoblock/icon-contracts-api:${{ steps.source.outputs.TAG }}
 
       - name: Build and push worker
         uses: docker/build-push-action@v2
@@ -95,16 +95,16 @@ jobs:
           - cluster: dev-lax
             network_name: berlin
             network_version: v2
-          - cluster: prod-lax
+          - cluster: prod-sng
             network_name: mainnet
             network_version: v2
-          - cluster: prod-lax
+          - cluster: prod-sng
             network_name: sejong
             network_version: v2
-          - cluster: prod-lax
+          - cluster: prod-sng
             network_name: lisbon
             network_version: v2
-          - cluster: prod-lax
+          - cluster: prod-sng
             network_name: berlin
             network_version: v2
           - cluster: prod-ams
