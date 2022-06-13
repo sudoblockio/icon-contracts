@@ -3,7 +3,8 @@ import os
 
 import pytest
 
-from icon_contracts.core.classifier import is_irc2
+from icon_contracts.core.classifier import contract_classifier
+from icon_contracts.core.irc_2 import IRC2_METHODS
 
 VALID_IRC2_CONTRACTS = [
     ("balanced_abi.json", True),
@@ -20,7 +21,7 @@ def test_irc2_accept(fixtures_dir, fixture, validity):
     with open(os.path.join(fixtures_dir, "abi", fixture)) as f:
         abi = json.load(f)
 
-    classification = is_irc2(abi, "foo")
+    classification = contract_classifier(abi, IRC2_METHODS)
     assert classification == validity
 
 
