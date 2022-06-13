@@ -2,6 +2,18 @@ import pytest
 
 from icon_contracts.models.contracts import Contract
 
+CONTRACT_CLASSIFICATIONS = ["cxb0b6f777fba13d62961ad8ce11be7ef6c4b2bcc6"]
+
+
+@pytest.mark.parametrize("address", CONTRACT_CLASSIFICATIONS)
+def test_classify_contract_contract(address):
+    """Non-tokens."""
+    contract = Contract()
+    contract.address = address
+    contract.extract_contract_details()
+    assert contract.contract_type is None
+
+
 TOKEN_CLASSIFICATIONS_IRC2 = [
     ("cxf61cd5a45dc9f91c15aa65831a30a90d59a09619", "BALN"),
     ("cx0bb718a35e7fc8faffe6faf82b32f6f7cb5e7c81", "CHIU"),
@@ -15,17 +27,6 @@ def test_classify_contract_irc2(address, symbol):
     contract.extract_contract_details()
     assert contract.symbol == symbol
     assert contract.token_standard == "irc2"
-
-
-CONTRACT_CLASSIFICATIONS = ["cxb799844c58d5e5afb08ad4078566a78bd82d932c"]
-
-
-@pytest.mark.parametrize("address", CONTRACT_CLASSIFICATIONS)
-def test_classify_contract_contract(address):
-    contract = Contract()
-    contract.address = address
-    contract.extract_contract_details()
-    assert contract.contract_type == "Contract"
 
 
 IRC3_CONTRACTS = [

@@ -21,7 +21,9 @@ class Contract(SQLModel, table=True):
     name: Optional[str] = Field(None, index=False)
     symbol: str = Field(None, index=False)
     decimals: str = Field(None, index=False)
-    contract_type: str = Field("Contract", index=True, description="One of Contract, IRC2")
+
+    contract_type: str = Field(None, index=True, description="One of python / java")
+    token_standard: str = Field(None, index=True, description="One of Contract, IRC2")
 
     email: Optional[str] = Field(None, index=False)
     website: Optional[str] = Field(None, index=False)
@@ -75,19 +77,19 @@ class Contract(SQLModel, table=True):
 
         # IRC 2
         if contract_classifier(self.abi, IRC2_METHODS):
-            self.contract_type = "IRC2"
+            self.token_standard = "irc2"
             self.symbol = icx_call(self.address, {"method": "symbol"}).json()["result"]
             self.decimals = icx_call(self.address, {"method": "decimals"}).json()["result"]
             self.is_token = True
 
         # IRC 3
-        if contract_classifier(self.abi, IRC3_METHODS):
-            self.contract_type = "IRC3"
+        elif contract_classifier(self.abi, IRC3_METHODS):
+            self.token_standard = "irc3"
             self.is_token = True
             self.is_nft = True
 
         # IRC 31
-        if contract_classifier(self.abi, IRC31_METHODS):
-            self.contract_type = "IRC31"
+        elif contract_classifier(self.abi, IRC31_METHODS):
+            self.token_standard = "irc31"
             self.is_token = True
             self.is_nft = True
