@@ -43,7 +43,7 @@ def test_classify_contract_irc3(address):
 
 
 IRC31_CONTRACTS = [
-    "cx30f18d26f45d990112a4cd4825c0b79af73aac7c",
+    # "cx30f18d26f45d990112a4cd4825c0b79af73aac7c",  # Missing "name" method
     "cx384018e03aa8b739472c7a0645b70df97550e2c2",
     "cx45cf0c108c3df650b1c28d9e2fdc8b4d068cb2fa",
     "cx5f1cc357f2304fb2646e20211adbe137ab5852dd",
