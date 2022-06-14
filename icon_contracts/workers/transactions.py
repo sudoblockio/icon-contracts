@@ -111,7 +111,9 @@ class TransactionsWorker(Worker):
 
         if self.data["contentType"] == "application/zip":
             contract.contract_type = "python"
-            contract.status = "Pending"
+            if contract.status is None:
+                # Means we haven't seen the audit yet
+                contract.status = "Pending"
         elif self.data["contentType"] == "application/java":
             contract.contract_type = "java"
             contract.status = "Active"
