@@ -62,13 +62,6 @@ IRC31_METHODS = [
         "readonly": "0x1",
     },
     {
-        "name": "name",
-        "type": "function",
-        "inputs": [],
-        "outputs": [{"type": "str"}],
-        "readonly": "0x1",
-    },
-    {
         "name": "setApprovalForAll",
         "type": "function",
         "inputs": [{"name": "_operator", "type": "Address"}, {"name": "_approved", "type": "bool"}],

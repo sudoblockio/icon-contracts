@@ -34,13 +34,6 @@ IRC3_METHODS = [
         "readonly": "0x1",
     },
     {
-        "name": "name",
-        "type": "function",
-        "inputs": [],
-        "outputs": [{"type": "str"}],
-        "readonly": "0x1",
-    },
-    {
         "name": "balanceOf",
         "type": "function",
         "inputs": [{"name": "_owner", "type": "Address"}],
