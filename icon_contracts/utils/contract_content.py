@@ -91,7 +91,7 @@ def upload_to_s3(s3_client: Any, filename: str, key: str, prefix: str = "contrac
 
 def get_contract_name(address):
     name_response = icx_call(address, {"method": "name"})
-    if name_response.status_code == 200:
+    if name_response is not None and name_response.status_code == 200:
         return icx_call(address, {"method": "name"}).json()["result"]
     else:
         return ""
