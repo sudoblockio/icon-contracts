@@ -241,6 +241,9 @@ class TransactionsWorker(Worker):
             contract.last_updated_block = self.block.number
             contract.last_updated_timestamp = self.transaction.timestamp
 
+        # Method that classifies the contract based on ABI for IRC2 stuff
+        contract.extract_contract_details()
+
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
