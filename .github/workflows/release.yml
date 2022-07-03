@@ -11,7 +11,7 @@ on:
       - "v*.*.*"
 
 jobs:
-  docker:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,233 +37,97 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: true
 
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      tag: ${{ steps.source.outputs.TAG }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - id: last
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: ${{ github.repository }}
+
       - name: Tag name
         id: source
         run: |
-          echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_WORKER }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_WORKER }}
-          aws-region: us-west-2
-
-      - name: Login to Amazon ECR
-        id: login-ecr-worker
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Worker - Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr-worker.outputs.registry }}
-          ECR_REPOSITORY: icon-contracts-worker
-          IMAGE_TAG: prod-${{ steps.source.outputs.TAG }}
-        run: |
-          docker build -f Dockerfile.worker --target prod --build-arg SERVICE_NAME=worker -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_API }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_API }}
-          aws-region: us-west-2
-
-      - name: Login to Amazon ECR
-        id: login-ecr-api
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: API - Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr-api.outputs.registry }}
-          ECR_REPOSITORY: icon-contracts-api
-          IMAGE_TAG: prod-${{ steps.source.outputs.TAG }}
-        run: |
-          docker build --target prod  --build-arg SERVICE_NAME=api -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo ::set-output name=TAG::${{ steps.last.outputs.release }}-${{ github.run_number }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push (API) - latest
+      - name: Build and push API
         uses: docker/build-push-action@v2
         with:
           context: .
-          build-args: |
-            SERVICE_NAME=api
           file: ./Dockerfile
           target: prod
           push: true
-          tags: geometrylabs/icon-contracts-api:latest
+          tags: sudoblock/icon-contracts-api:latest, sudoblock/icon-contracts-api:${{ steps.source.outputs.TAG }}
 
-      - name: Build and push (API)
+      - name: Build and push worker
         uses: docker/build-push-action@v2
         with:
           context: .
-          build-args: |
-            SERVICE_NAME=api
-          file: ./Dockerfile
-          target: prod
-          push: true
-          tags: geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}
-
-      - name: Build and push (WORKER) - latest
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          build-args: |
-            SERVICE_NAME=worker
           file: ./Dockerfile.worker
           target: prod
           push: true
-          tags: geometrylabs/icon-contracts-api:latest
+          tags: sudoblock/icon-contracts-worker:latest, sudoblock/icon-contracts-worker:${{ steps.source.outputs.TAG }}
 
-      - name: Build and push (WORKER)
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          build-args: |
-            SERVICE_NAME=worker
-          file: ./Dockerfile.worker
-          target: prod
-          push: true
-          tags: geometrylabs/icon-contracts-api:${{ steps.source.outputs.TAG }}
+  push_refs:
+    runs-on: ubuntu-latest
+    needs: docker
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - cluster: prod-sng
+            network_name: mainnet
+            network_version: v2
+          - cluster: prod-ams
+            network_name: mainnet
+            network_version: v2
+
+    steps:
 
       - name: Checkout charts repo
         uses: actions/checkout@v2
         with:
-          repository: geometry-labs/icon-charts
+          repository: sudoblockio/icon-charts
           ref: main
           path: charts
           token: ${{ secrets.ICON_CHARTS_PAT }}
 
-      - name: Update prod-lisbon-us-west-2 deployment values file (API)
+      - name: Update API ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment values file
         uses: fjogeleit/yaml-update-action@master
         with:
           workDir: charts
-          repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-us-west-2/lisbon/contracts/values.yaml'
+          repository: sudoblockio/icon-charts
+          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
           propertyPath: 'api.image.tag'
-          value: prod-${{ steps.source.outputs.TAG }}
+          value: ${{needs.docker.outputs.tag}}
           branch: main
           createPR: 'false'
           updateFile: true
           commitChange: false
 
-      - name: Update prod-lisbon-us-west-2 deployment values file (WORKER)
+      - name: Update worker ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment values file
         uses: fjogeleit/yaml-update-action@master
         with:
           workDir: charts
-          repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-us-west-2/lisbon/contracts/values.yaml'
+          repository: sudoblockio/icon-charts
+          valueFile: 'deployments/${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }}/contracts/tags.yaml'
           propertyPath: 'worker.image.tag'
-          value: prod-${{ steps.source.outputs.TAG }}
+          value: ${{needs.docker.outputs.tag}}
           branch: main
           createPR: 'false'
           updateFile: true
-          commitChange: false
-
-#      - name: Update prod-berlin-us-west-2 deployment values file (API)
-#        uses: fjogeleit/yaml-update-action@master
-#        with:
-#          workDir: charts
-#          repository: geometry-labs/icon-charts
-#          valueFile: 'deployments/prod-us-west-2/berlin/contracts/values.yaml'
-#          propertyPath: 'api.image.tag'
-#          value: prod-${{ steps.source.outputs.TAG }}
-#          branch: main
-#          createPR: 'false'
-#          updateFile: true
-#          commitChange: false
-#
-#      - name: Update prod-berlin-us-west-2 deployment values file (WORKER)
-#        uses: fjogeleit/yaml-update-action@master
-#        with:
-#          workDir: charts
-#          repository: geometry-labs/icon-charts
-#          valueFile: 'deployments/prod-us-west-2/berlin/contracts/values.yaml'
-#          propertyPath: 'worker.image.tag'
-#          value: prod-${{ steps.source.outputs.TAG }}
-#          branch: main
-#          createPR: 'false'
-#          updateFile: true
-#          commitChange: false
-#
-      - name: Update prod-mainnet-us deployment values file (API) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          workDir: charts
-          repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-us-west-2/mainnet/contracts/values.yaml'
-          propertyPath: 'api.image.tag'
-          value: prod-${{ steps.source.outputs.TAG }}
-          branch: main
-          createPR: 'false'
-          updateFile: true
-          commitChange: false
-
-      - name: Update prod-mainnet-us deployment values file (WORKER) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          workDir: charts
-          repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-us-west-2/mainnet/contracts/values.yaml'
-          propertyPath: 'worker.image.tag'
-          value: prod-${{ steps.source.outputs.TAG }}
-          branch: main
-          createPR: 'false'
-          message: 'contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}'
-          token: ${{ secrets.ICON_CHARTS_PAT }}
-          updateFile: true
-          commitChange: false
-
-      - name: Update prod-mainnet-eu deployment values file (API) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          workDir: charts
-          repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-eu-west-1/mainnet/contracts/values.yaml'
-          propertyPath: 'api.image.tag'
-          value: prod-${{ steps.source.outputs.TAG }}
-          branch: main
-          createPR: 'false'
-          updateFile: true
-          commitChange: false
-
-      - name: Update prod-mainnet-eu deployment values file (WORKER) and re-commit
-        uses: fjogeleit/yaml-update-action@master
-        with:
-          workDir: charts
-          repository: geometry-labs/icon-charts
-          valueFile: 'deployments/prod-eu-west-1/mainnet/contracts/values.yaml'
-          propertyPath: 'worker.image.tag'
-          value: prod-${{ steps.source.outputs.TAG }}
-          branch: main
-          createPR: 'false'
-          message: 'contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}'
-          token: ${{ secrets.ICON_CHARTS_PAT }}
-          updateFile: true
-          commitChange: false
-
-      - name: Configure credentials
-        uses: oleksiyrudenko/gha-git-credentials@v2-latest
-        with:
+          message: "contracts ${{ matrix.cluster }}/${{ matrix.network_name }}-${{ matrix.network_version }} deployment image version to ${{needs.docker.outputs.tag}}"
           token: '${{ secrets.ICON_CHARTS_PAT }}'
-          global: true
-
-      - name: Commit all updates
-        run: |
-          git add -A
-          git commit -m "contracts prod deployment (mainnet) image versions to ${{ steps.source.outputs.TAG }}"
-          git push origin
-        working-directory: charts
-
-      - name: Push tags
-        run: |
-          git tag -f contracts-prod-uswest2
-          git tag -f contracts-prod-euwest1
-          git push -f origin --tags
-        working-directory: charts
