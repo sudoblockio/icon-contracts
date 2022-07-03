@@ -12,7 +12,9 @@ def contract_to_proto(
         contract_proto = ContractProcessed()
 
     contract_proto.address = contract_db.address
-    contract_proto.name = contract_db.name
+
+    if contract_db.name is not None:
+        contract_proto.name = contract_db.name
 
     if contract_db.created_timestamp is not None:
         contract_proto.created_timestamp = int(contract_db.created_timestamp)
