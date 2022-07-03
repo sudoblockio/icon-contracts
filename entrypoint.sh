@@ -5,6 +5,7 @@ if [ "$1" = "worker" ]; then
   cd icon_contracts
   alembic upgrade head
   echo "Starting worker..."
+#  python main_worker.py -X faulthandler
   python main_worker.py
 
 elif [ "$1" = "api" ]; then

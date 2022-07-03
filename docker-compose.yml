@@ -6,7 +6,7 @@ x-env: &env
 
   # Ports
   PORT: "8000"
-  HEALTH_PORT: "8000"
+#  HEALTH_PORT: "8000"
   METRICS_PORT: "9400"
 
   # Prefix
