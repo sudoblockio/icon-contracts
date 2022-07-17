@@ -5,6 +5,8 @@ from icon_contracts.schemas.contract_processed_pb2 import ContractProcessed
 def contract_to_proto(
     contract_db: Contract,
     contract_updated_block: int,
+    contract_updated_hash: str,
+    is_creation: bool,
     contract_proto: ContractProcessed = None,
 ):
     """Convert a SQLModel contract to a protobuf."""
@@ -22,8 +24,8 @@ def contract_to_proto(
     if contract_db.status is not None:
         contract_proto.status = contract_db.status
 
-    if contract_db.status is not None:
-        contract_proto.status = contract_db.status
+    if contract_db.symbol is not None:
+        contract_proto.symbol = contract_db.symbol
 
     if contract_db.token_standard is not None:
         contract_proto.token_standard = contract_db.token_standard
@@ -31,7 +33,11 @@ def contract_to_proto(
     if contract_db.contract_type is not None:
         contract_proto.contract_type = contract_db.contract_type
 
-    contract_proto.contract_updated_block = contract_updated_block
     contract_proto.is_token = contract_db.is_token
+
+    # Tx related
+    contract_proto.contract_updated_block = contract_updated_block
+    contract_proto.contract_updated_hash = contract_updated_hash
+    contract_proto.is_creation = is_creation
 
     return contract_proto

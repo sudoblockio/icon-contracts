@@ -166,7 +166,12 @@ class TransactionsWorker(Worker):
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
             # Convert the pydantic object to proto
-            contract_to_proto(contract, contract_updated_block=self.block.number),
+            contract_to_proto(
+                contract,
+                contract_updated_block=self.block.number,
+                contract_updated_hash=self.transaction.hash,
+                is_creation=True,
+            ),
         )
 
         # Commit the contract
@@ -241,17 +246,22 @@ class TransactionsWorker(Worker):
             contract.last_updated_block = self.block.number
             contract.last_updated_timestamp = self.transaction.timestamp
 
-        # Method that classifies the contract based on ABI for IRC2 stuff
-        contract.extract_contract_details()
+            # Method that classifies the contract based on ABI for IRC2 stuff
+            contract.extract_contract_details()
 
-        self.produce_protobuf(
-            settings.PRODUCER_TOPIC_CONTRACTS,
-            self.transaction.hash,  # Keyed on hash
-            contract_to_proto(contract, self.block.number),
-        )
+            self.produce_protobuf(
+                settings.PRODUCER_TOPIC_CONTRACTS,
+                self.transaction.hash,  # Keyed on hash
+                contract_to_proto(
+                    contract,
+                    contract_updated_block=self.block.number,
+                    contract_updated_hash=self.transaction.hash,
+                    is_creation=False,
+                ),
+            )
 
-        self.session.merge(contract)
-        self.session.commit()
+            self.session.merge(contract)
+            self.session.commit()
 
     def process_verification_social_media(self, params: VerificationInput):
         """Process social media contacts for verifiction txs."""
