@@ -6,11 +6,18 @@ from icon_contracts.config import settings
 from icon_contracts.log import logger
 
 
-def post_rpc(payload: dict):
-    r = requests.post(settings.ICON_NODE_URL, data=json.dumps(payload))
+def post_rpc(payload: dict, endpoint: str = None, backup_endpoint: str = None):
+    if endpoint is None:
+        endpoint = settings.ICON_NODE_URL
+
+    r = requests.post(endpoint, data=json.dumps(payload))
+
+    if backup_endpoint is None:
+        backup_endpoint = settings.BACKUP_ICON_NODE_URL
+
     if r.status_code != 200:
         logger.info(f"Error {r.status_code} with payload {payload}")
-        r = requests.post(settings.BACKUP_ICON_NODE_URL, data=json.dumps(payload))
+        r = requests.post(backup_endpoint, data=json.dumps(payload))
         if r.status_code != 200:
             logger.info(f"Error {r.status_code} with payload {payload} to backup")
             return None
@@ -109,6 +116,28 @@ def getBond(address: str):
         },
     }
     return post_rpc(payload)
+
+
+def getScoreStatus(address: str):
+    payload = {
+        "id": 1001,
+        "jsonrpc": "2.0",
+        "method": "icx_getScoreStatus",
+        "params": {"address": address},
+    }
+    return post_rpc(payload)
+
+
+def getTrace(tx_hash: str):
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1234,
+        "method": "debug_getTrace",
+        "params": {
+            "txHash": tx_hash,
+        },
+    }
+    return post_rpc(payload, settings.ICON_NODE_URL + "d", settings.BACKUP_ICON_NODE_URL + "d")
 
 
 # if __name__ == "__main__":
