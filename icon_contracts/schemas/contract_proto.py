@@ -37,7 +37,7 @@ def contract_to_proto(
 
     # Tx related
     contract_proto.contract_updated_block = contract_updated_block
-    contract_proto.contract_updated_hash = contract_updated_hash
+    # contract_proto.contract_updated_hash = contract_updated_hash
     contract_proto.is_creation = is_creation
 
     return contract_proto
