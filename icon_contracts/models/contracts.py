@@ -50,6 +50,10 @@ class Contract(SQLModel, table=True):
         "/bucket/[address]_[revision_number].zip",
     )
 
+    audit_tx_hash: str = Field(None, index=False)
+    code_hash: str = Field(None, index=False)
+    deploy_tx_hash: str = Field(None, index=False)
+
     status: Optional[str] = Field(
         None, index=True, description="Field to inform audit status of 1.0 contracts."
     )

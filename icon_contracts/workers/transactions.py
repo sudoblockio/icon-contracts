@@ -23,7 +23,12 @@ from icon_contracts.utils.contract_content import (
     upload_to_s3,
     zip_content_to_dir,
 )
-from icon_contracts.utils.rpc import icx_getTransactionResult
+from icon_contracts.utils.rpc import (
+    getScoreStatus,
+    icx_call,
+    icx_getScoreApi,
+    icx_getTransactionResult,
+)
 from icon_contracts.utils.zip import unzip_safe
 from icon_contracts.workers.db import session_factory
 from icon_contracts.workers.kafka import Worker
@@ -36,11 +41,17 @@ from icon_contracts.workers.verification import (
 
 metrics = Metrics()
 
+ADDRESSES_PROCESSED = set()
+
 CONTRACT_VERIFICATION_CONTRACTS = {
     "cxfc514c18d8dd85f06e31509a1f231efc5d8939e0",  # Mainnet
     "cx4a574176f82852487b547126b7a59874f5599acd",  # Berlin
     "cx59fd09b8fd87ad82961c29c4ff5e44773f629330",  # Lisbon
 }
+
+# BTP_CONTRACTS_LIST = [
+#     "",
+# ]
 
 
 class TransactionsWorker(Worker):
@@ -55,7 +66,7 @@ class TransactionsWorker(Worker):
     data: dict = None
 
     block: Type[BlockETL] = BlockETL()
-    transaction: Type[TransactionETL] = None
+    transaction: TransactionETL = None
     log: Type[LogETL] = None
 
     def upload_contract_source(self, contract, content):
@@ -123,7 +134,8 @@ class TransactionsWorker(Worker):
         # Checking last_updated_timestamp case for when we see a contract approval
         # event before we see the contract submission
         if (
-            self.block.number > contract.last_updated_block
+            contract.last_updated_block is None
+            or self.block.number > contract.last_updated_block
             or contract.last_updated_timestamp is None
         ):
             logger.info(f"Updating contract address = {address} at block = {self.block.number}")
@@ -438,10 +450,63 @@ class TransactionsWorker(Worker):
                 if os.path.exists(tmp_path):
                     shutil.rmtree(os.path.dirname(tmp_path))
 
+    def process_new_contract_tx(self, address: str):
+        contract = self.session.get(Contract, address)
+        if contract is not None:
+            return
+
+        r = getScoreStatus(address=address)
+        if r.status_code != 200:
+            logger.info(f"Invalid scoreStatus response for address={address}")
+            return
+        score_status = r.json()["result"]
+
+        try:
+            contract = Contract(
+                address=address,
+                audit_tx_hash=score_status["current"]["auditTxHash"],
+                code_hash=score_status["current"]["codeHash"],
+                deploy_tx_hash=score_status["current"]["deployTxHash"],
+                contract_type=score_status["current"]["type"],
+                status=score_status["current"]["status"].capitalize(),
+                owner_address=score_status["owner"],
+            )
+        except KeyError:
+            return
+
+        contract.extract_contract_details()
+
+        self.session.merge(contract)
+        self.session.commit()
+
+    # def process_btp(self):
+    #     from icon_contracts.workers.traces import get_intra_contract_creation_content
+    #     value = get_intra_contract_creation_content(self)
+    #     if value is None:
+    #         return
+
+    # def process_logs(self):
+    #     pass
+
     def process_transaction(self):
         # Pass on any invalid Tx in this service
         if self.transaction.to_address == "" or self.transaction.status != "0x1":
             return
+
+        # Check for new address and process them if they are a contract
+        if (
+            self.transaction.to_address[0:2] == "cx"
+            and self.transaction.to_address not in ADDRESSES_PROCESSED
+        ):
+            self.process_new_contract_tx(address=self.transaction.to_address)
+            ADDRESSES_PROCESSED.add(self.transaction.to_address)
+
+        if (
+            self.transaction.from_address[0:2] == "cx"
+            and self.transaction.from_address not in ADDRESSES_PROCESSED
+        ):
+            self.process_new_contract_tx(address=self.transaction.from_address)
+            ADDRESSES_PROCESSED.add(self.transaction.from_address)
 
         # Handle audit process
         elif self.transaction.to_address == settings.one_address:
@@ -450,6 +515,9 @@ class TransactionsWorker(Worker):
         # Handle verification process
         elif self.transaction.to_address in CONTRACT_VERIFICATION_CONTRACTS:
             self.process_verification()
+
+        # elif self.transaction.to_address in BTP_CONTRACTS_LIST:
+        #     self.process_btp()
 
         # Need to check the data field if there is a json payload otherwise we are not
         # interested in it in this context
@@ -472,7 +540,6 @@ class TransactionsWorker(Worker):
                 if self.data["contentType"] in ["application/zip", "application/java"]:
                     logger.info(f"Handling contract creation hash {self.transaction.hash}.")
                     self.process_contract(self.data["content"])
-                return
 
     def process(self):
         value = self.msg.value()
@@ -483,9 +550,13 @@ class TransactionsWorker(Worker):
         # past the offset that the job was set off at.
         self.handle_msg_count()
 
-        for i in self.block.transactions:
-            self.transaction = i
+        for tx in self.block.transactions:
+            self.transaction = tx
             self.process_transaction()
+
+            # for lg in tx.logs:
+            #     self.log = lg
+            #     self.process_logs()
 
 
 def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
