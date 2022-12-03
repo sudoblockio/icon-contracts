@@ -2,11 +2,11 @@
   <h2 align="center">ICON Contracts Service</h2>
 </p>
 
-[![loopchain](https://img.shields.io/badge/ICON-API-blue?logoColor=white&logo=icon&labelColor=31B8BB)](https://shields.io) [![GitHub Release](https://img.shields.io/github/release/geometry-labs/icon-contracts.svg?style=flat)]() ![](https://github.com/geometry-labs/icon-contracts/workflows/push-main/badge.svg?branch=main) [![codecov](https://codecov.io/gh/geometry-labs/icon-contracts/branch/main/graph/badge.svg)](https://codecov.io/gh/geometry-labs/icon-contracts)  ![](https://img.shields.io/github/license/geometry-labs/icon-contracts)
+[![loopchain](https://img.shields.io/badge/ICON-API-blue?logoColor=white&logo=icon&labelColor=31B8BB)](https://shields.io) [![GitHub Release](https://img.shields.io/github/release/sudoblockio/icon-contracts.svg?style=flat)]() ![](https://github.com/sudoblockio/icon-contracts/workflows/push-main/badge.svg?branch=main) [![codecov](https://codecov.io/gh/sudoblockio/icon-contracts/branch/main/graph/badge.svg)](https://codecov.io/gh/sudoblockio/icon-contracts)  ![](https://img.shields.io/github/license/sudoblockio/icon-contracts)
 
-[Live API Docs](https://explorer.icon.geometry-dev.net/api/v1/contracts/docs/)
+[Live API Docs](https://tracker.icon.community/api/v1/contracts/docs/)
 
-Off chain indexer for the ICON Blockchain serving the **contracts** context of the [icon-explorer](https://github.com/geometry-labs/icon-explorer). Service is broken up into API and worker components that are run as individual docker containers. It depends on data coming in from [icon-etl](https://github.com/geometry-labs/icon-etl) over a Kafka message queue with persistence on a postgres database.
+Off chain indexer for the ICON Blockchain serving the **contracts** context of the [icon-explorer](https://github.com/sudoblockio/icon-explorer). Service is broken up into API and worker components that are run as individual docker containers. It depends on data coming in from [icon-go-etl](https://github.com/sudoblockio/icon-go-etl) over a Kafka message queue with persistence on a postgres database.
 
 ### Contract Verification
 
