@@ -1,9 +1,5 @@
 name: push-main
 
-# 1. Run unit and integration tests
-# 2. Push containers to AWS ECR with tag based on incrementing build number
-# 3. Recommit an update to the chart's deployments with the updated build number in the `deployment` branch
-
 on:
   push:
     branches:
@@ -87,17 +83,17 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - cluster: prod-ams
-            network_name: berlin
-            network_version: v2
-          - cluster: prod-ams
-            network_name: mainnet
-            network_version: v2
-          - cluster: prod-ams
+          - cluster: prod-sng
             network_name: sejong
             network_version: v2
-          - cluster: prod-ams
+          - cluster: prod-sng
             network_name: lisbon
+            network_version: v2
+          - cluster: prod-sng
+            network_name: berlin
+            network_version: v2
+          - cluster: prod-sng
+            network_name: mainnet
             network_version: v2
 
     steps:
