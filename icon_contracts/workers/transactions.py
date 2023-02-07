@@ -479,6 +479,19 @@ class TransactionsWorker(Worker):
         self.session.merge(contract)
         self.session.commit()
 
+        # We additionally need to
+        self.produce_protobuf(
+            settings.PRODUCER_TOPIC_CONTRACTS,
+            self.transaction.hash,  # Keyed on hash
+            # Convert the pydantic object to proto
+            contract_to_proto(
+                contract,
+                contract_updated_block=self.block.number,
+                contract_updated_hash=self.transaction.hash,
+                is_creation=True,
+            ),
+        )
+
     # def process_btp(self):
     #     from icon_contracts.workers.traces import get_intra_contract_creation_content
     #     value = get_intra_contract_creation_content(self)
