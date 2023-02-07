@@ -14,7 +14,9 @@ from icon_contracts.metrics import Metrics
 from icon_contracts.models.contracts import Contract
 from icon_contracts.models.social_media import SocialMedia
 from icon_contracts.models.verification_contract import VerificationInput
-from icon_contracts.schemas.block_etl_pb2 import BlockETL, LogETL, TransactionETL
+from icon_contracts.schemas.block_etl_pb2 import BlockETL  # noqa
+from icon_contracts.schemas.block_etl_pb2 import LogETL  # noqa
+from icon_contracts.schemas.block_etl_pb2 import TransactionETL  # noqa
 from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.utils.contract_content import (
     get_contract_name,
@@ -492,15 +494,6 @@ class TransactionsWorker(Worker):
             ),
         )
 
-    # def process_btp(self):
-    #     from icon_contracts.workers.traces import get_intra_contract_creation_content
-    #     value = get_intra_contract_creation_content(self)
-    #     if value is None:
-    #         return
-
-    # def process_logs(self):
-    #     pass
-
     def process_transaction(self):
         # Pass on any invalid Tx in this service
         if self.transaction.to_address == "" or self.transaction.status != "0x1":
@@ -566,10 +559,6 @@ class TransactionsWorker(Worker):
         for tx in self.block.transactions:
             self.transaction = tx
             self.process_transaction()
-
-            # for lg in tx.logs:
-            #     self.log = lg
-            #     self.process_logs()
 
 
 def transactions_worker_head(consumer_group=settings.CONSUMER_GROUP):
