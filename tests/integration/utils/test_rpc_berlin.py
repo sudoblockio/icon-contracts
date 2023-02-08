@@ -1,13 +1,9 @@
 import pytest
 
-from icon_contracts.config import settings
 from icon_contracts.utils import rpc
-
-# settings.ICON_NODE_URL = "https://api.berlin.icon.community/api/v3"
 
 CREATION_TX_HASHES = [
     "0x0a6ac5576d837b7c368023cd6b33ddf17755171a5205a22b266f466aa1b1f2c2",
-    # "0xaeef4b72cae142dac5720fa81a7d167488bd62afde53ea4c4105c049dfe7ffd4",  # Berlin
 ]
 
 
@@ -20,7 +16,7 @@ def test_icx_getTransactionResult_creation(hash):
 
 
 def test_icx_getScoreApi():
-    result = rpc.icx_getScoreApi("cxcc254b11e1b14779b347ec7f392ea465c6e22b5b").json()["result"]
+    result = rpc.icx_getScoreApi("cxa1afa0580d0da7f0a40583cb2efb518d5be1d5f1").json()["result"]
 
     assert isinstance(result, list)
     assert len(result) > 3
@@ -28,8 +24,8 @@ def test_icx_getScoreApi():
 
 def test_getTrace():
     result = rpc.getTrace(
-        "0xaeef4b72cae142dac5720fa81a7d167488bd62afde53ea4c4105c049dfe7ffd4"
+        "0x8e621f0eeb5a15a1e513fd93cb20057b4246cd37da71987528f89ee2adbe7d9f"
     ).json()["result"]
 
-    assert isinstance(result, list)
-    assert len(result) > 3
+    assert isinstance(result["logs"], list)
+    assert len(result) > 1
