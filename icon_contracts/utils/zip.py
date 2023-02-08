@@ -21,7 +21,8 @@ def unzip_safe(input_zip, output_dir, contract_hash=None):
     try:
         with unzip_limit(1 << 25):  # 32 Mb
             with zipfile.ZipFile(input_zip, "r") as zip_ref:
-                size = sum(e.file_size for e in zip_ref.infolist())
+                # https://github.com/sudoblockio/icon-contracts/issues/6
+                # size = sum(e.file_size for e in zip_ref.infolist())
                 # if size
                 zip_ref.extractall(output_dir)
     except MemoryError as e:
