@@ -21,7 +21,7 @@
   "gradle_target": "bsh",
   "gradle_task": "optimizedJar",
   "source_code_location": "bsh/build/libs/bsh-0.1.0-optimized.jar",
-  "github_org":  "geometry-labs",
+  "github_org":  "sudoblockio",
   "github_repo": "btp",
   "github_directory":  "javascore",
   "github_release": "test-0.1.0-alpha",
