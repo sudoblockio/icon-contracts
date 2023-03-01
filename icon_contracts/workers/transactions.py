@@ -453,10 +453,11 @@ class TransactionsWorker(Worker):
                     shutil.rmtree(os.path.dirname(tmp_path))
 
     def process_new_contract_tx(self, address: str):
-        contract = self.session.get(Contract, address)
-        if contract is not None:
-            return
-
+        """
+        Handles internally created contracts producing them to protobuf. Does this by
+         extracting out the details and then if the contract is not in the DB,
+         produces a msg for that contract.
+        """
         r = getScoreStatus(address=address)
         if r.status_code != 200:
             logger.info(f"Invalid scoreStatus response for address={address}")
@@ -478,10 +479,7 @@ class TransactionsWorker(Worker):
 
         contract.extract_contract_details()
 
-        self.session.merge(contract)
-        self.session.commit()
-
-        # We additionally need to
+        # We then need to produce this to proto
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
@@ -493,6 +491,11 @@ class TransactionsWorker(Worker):
                 is_creation=True,
             ),
         )
+        # Skip putting in DB if we have it there already.
+        contract = self.session.get(Contract, address)
+        if contract is None:
+            self.session.merge(contract)
+            self.session.commit()
 
     def process_transaction(self):
         # Pass on any invalid Tx in this service
