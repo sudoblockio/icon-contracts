@@ -51,6 +51,7 @@ CONTRACT_VERIFICATION_CONTRACTS = {
     "cx59fd09b8fd87ad82961c29c4ff5e44773f629330",  # Lisbon
 }
 
+
 # BTP_CONTRACTS_LIST = [
 #     "",
 # ]
