@@ -464,20 +464,22 @@ class TransactionsWorker(Worker):
             return
         score_status = r.json()["result"]
 
-        try:
-            contract = Contract(
-                address=address,
-                audit_tx_hash=score_status["current"]["auditTxHash"],
-                code_hash=score_status["current"]["codeHash"],
-                deploy_tx_hash=score_status["current"]["deployTxHash"],
-                contract_type=score_status["current"]["type"],
-                status=score_status["current"]["status"].capitalize(),
-                owner_address=score_status["owner"],
-            )
-        except KeyError:
-            return
+        contract = self.session.get(Contract, address)
 
-        contract.extract_contract_details()
+        if contract is None:
+            try:
+                contract = Contract(
+                    address=address,
+                    audit_tx_hash=score_status["current"]["auditTxHash"],
+                    code_hash=score_status["current"]["codeHash"],
+                    deploy_tx_hash=score_status["current"]["deployTxHash"],
+                    contract_type=score_status["current"]["type"],
+                    status=score_status["current"]["status"].capitalize(),
+                    owner_address=score_status["owner"],
+                )
+            except KeyError:
+                return
+            contract.extract_contract_details()
 
         # We then need to produce this to proto
         self.produce_protobuf(
