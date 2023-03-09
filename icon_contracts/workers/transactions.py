@@ -18,6 +18,7 @@ from icon_contracts.schemas.block_etl_pb2 import BlockETL  # noqa
 from icon_contracts.schemas.block_etl_pb2 import LogETL  # noqa
 from icon_contracts.schemas.block_etl_pb2 import TransactionETL  # noqa
 from icon_contracts.schemas.contract_proto import contract_to_proto
+from icon_contracts.utils.api import get_first_tx
 from icon_contracts.utils.contract_content import (
     get_contract_name,
     get_s3_client,
@@ -25,12 +26,7 @@ from icon_contracts.utils.contract_content import (
     upload_to_s3,
     zip_content_to_dir,
 )
-from icon_contracts.utils.rpc import (
-    getScoreStatus,
-    icx_call,
-    icx_getScoreApi,
-    icx_getTransactionResult,
-)
+from icon_contracts.utils.rpc import getScoreStatus, icx_getTransactionResult
 from icon_contracts.utils.zip import unzip_safe
 from icon_contracts.workers.db import session_factory
 from icon_contracts.workers.kafka import Worker
@@ -467,7 +463,9 @@ class TransactionsWorker(Worker):
 
         contract = self.session.get(Contract, address)
 
+        put_in_db = False
         if contract is None:
+            put_in_db = True
             try:
                 contract = Contract(
                     address=address,
@@ -482,21 +480,27 @@ class TransactionsWorker(Worker):
                 return
             contract.extract_contract_details()
 
+        # Adding other info for initial_block might screw up non-internal contracts
+        if contract.last_updated_timestamp is None:
+            contract.last_updated_timestamp = get_first_tx(address=contract.address)
+            self.session.merge(contract)
+            self.session.commit()
+
         # We then need to produce this to proto
         self.produce_protobuf(
             settings.PRODUCER_TOPIC_CONTRACTS,
             self.transaction.hash,  # Keyed on hash
             # Convert the pydantic object to proto
             contract_to_proto(
-                contract,
                 contract_updated_block=self.block.number,
                 contract_updated_hash=self.transaction.hash,
                 is_creation=True,
             ),
         )
+
         # Skip putting in DB if we have it there already.
-        contract = self.session.get(Contract, address)
-        if contract is None:
+        # TODO: This will might cause bugs on initial sync.
+        if put_in_db:
             self.session.merge(contract)
             self.session.commit()
 
