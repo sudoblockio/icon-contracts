@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     # ICON_NODE_URL: str = "https://berlin.net.solidwallet.io/api/v3"
     BACKUP_ICON_NODE_URL = "https://ctz.solidwallet.io/api/v3"
 
+    COMMUNITY_API_ENDPOINT: str = "https://tracker.icon.community"
+
     # Kafka
     KAFKA_BROKER_URL: str = "localhost:29092"
     # SCHEMA_REGISTRY_URL: str = "http://localhost:8081"
