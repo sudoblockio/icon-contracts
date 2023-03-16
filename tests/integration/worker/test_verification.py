@@ -62,7 +62,7 @@ def setup_db(db):
         (
             "zip-source-v1.json",
             "cx0744c46c005f254e512ae6b60aacd0a9b06eda1f",  # cx_addresss
-            "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cx0744c46c005f254e512ae6b60aacd0a9b06eda1f_1",
+            "https://icon-contracts-s3-bucket-prod-v2.s3.us-west-2.amazonaws.com/contract-sources/cx0744c46c005f254e512ae6b60aacd0a9b06eda1f_1",
             "hx37844fad06ed32738e754b205c747430a7feb81e",
         ),
         # (
