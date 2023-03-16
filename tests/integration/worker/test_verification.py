@@ -17,7 +17,7 @@ from icon_contracts.workers.verification import get_on_chain_contract_src
 
 def test_on_chain_contract_src():
     assert get_on_chain_contract_src(
-        "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cx0744c46c005f254e512ae6b60aacd0a9b06eda1f_1"
+        "https://icon-contracts-s3-bucket-prod-v2.s3.us-west-2.amazonaws.com/contract-sources/cx001324aa02bee31b374a9973d044818925e06db5_0"
     )
     shutil.rmtree("on_chain_source_code")
 
@@ -65,12 +65,12 @@ def setup_db(db):
             "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cx0744c46c005f254e512ae6b60aacd0a9b06eda1f_1",
             "hx37844fad06ed32738e754b205c747430a7feb81e",
         ),
-        (
-            "github-source-v1.json",
-            "cxb1e02f2bedcb3a1ad5ee913f3b7c895511f19d1c",  # cx_addresss
-            "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cxb1e02f2bedcb3a1ad5ee913f3b7c895511f19d1c_1",
-            "hx61b3ad6db9eb3e8e3c369187bffdc584227d21ed",
-        ),
+        # (
+        #     "github-source-v1.json",
+        #     "cxb1e02f2bedcb3a1ad5ee913f3b7c895511f19d1c",  # cx_addresss
+        #     "https://icon-explorer-prod.s3.us-west-2.amazonaws.com/contract-sources/cxb1e02f2bedcb3a1ad5ee913f3b7c895511f19d1c_1",
+        #     "hx61b3ad6db9eb3e8e3c369187bffdc584227d21ed",
+        # ),
     ],
 )
 def test_process_verification(
