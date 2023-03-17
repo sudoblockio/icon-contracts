@@ -492,6 +492,7 @@ class TransactionsWorker(Worker):
             self.transaction.hash,  # Keyed on hash
             # Convert the pydantic object to proto
             contract_to_proto(
+                contract_db=contract,
                 contract_updated_block=self.block.number,
                 contract_updated_hash=self.transaction.hash,
                 is_creation=True,
