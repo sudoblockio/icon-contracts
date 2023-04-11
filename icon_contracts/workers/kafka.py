@@ -196,5 +196,5 @@ class Worker(BaseModel):
                     logger.info("Exiting.")
                     sys.exit(0)
 
-        if self.msg_count % 100 == 0:
+        if self.msg_count % settings.LOG_MSG_SKIP == 0:
             logger.info(f"msg count {self.msg_count} for consumer group {self.consumer_group}")

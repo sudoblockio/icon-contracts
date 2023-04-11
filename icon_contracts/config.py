@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     HEALTH_POLLING_INTERVAL: int = 60
 
     # Logging
+    LOG_MSG_SKIP: int = 100000
     LOG_LEVEL: str = "INFO"
     LOG_TO_FILE: str = "false"
     LOG_FILE_NAME: str = "contracts.log"
