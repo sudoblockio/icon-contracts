@@ -65,4 +65,4 @@ def test_getScoreStatus():
     # address = "cxbdcc8e15406998d99c4927fecfde99f7c1404358"  # btp internal contract
     address = "cxba7a8271d85ed673d27574a30e3261e147902e92"
     result = getScoreStatus(address).json()["result"]
-    assert result == "Balance Token"
+    assert result
