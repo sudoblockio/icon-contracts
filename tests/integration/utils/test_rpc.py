@@ -1,7 +1,12 @@
 import pytest
 
 from icon_contracts.config import settings
-from icon_contracts.utils.rpc import icx_call, icx_getScoreApi, icx_getTransactionResult
+from icon_contracts.utils.rpc import (
+    getScoreStatus,
+    icx_call,
+    icx_getScoreApi,
+    icx_getTransactionResult,
+)
 
 AUDIT_TX_HASHES = [
     "0x85fff93f669f778254d8a4e484683ccb457b0e0c0d6ec61e410401c13bb0c162",
@@ -53,4 +58,11 @@ def test_icx_call():
     result = icx_call("cxf61cd5a45dc9f91c15aa65831a30a90d59a09619", {"method": "name"}).json()[
         "result"
     ]
+    assert result == "Balance Token"
+
+
+def test_getScoreStatus():
+    # address = "cxbdcc8e15406998d99c4927fecfde99f7c1404358"  # btp internal contract
+    address = "cxba7a8271d85ed673d27574a30e3261e147902e92"
+    result = getScoreStatus(address).json()["result"]
     assert result == "Balance Token"

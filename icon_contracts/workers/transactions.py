@@ -480,6 +480,15 @@ class TransactionsWorker(Worker):
                 return
             contract.extract_contract_details()
 
+        if contract.audit_tx_hash is None:
+            put_in_db = True
+            contract.audit_tx_hash = score_status["current"]["auditTxHash"]
+            contract.code_hash = score_status["current"]["codeHash"]
+            contract.deploy_tx_hash = score_status["current"]["deployTxHash"]
+            contract.contract_type = score_status["current"]["type"]
+            contract.status = score_status["current"]["status"].capitalize()
+            contract.owner_address = score_status["owner"]
+
         # Adding other info for initial_block might screw up non-internal contracts
         if contract.last_updated_timestamp is None:
             contract.last_updated_timestamp = get_first_tx(address=contract.address)
