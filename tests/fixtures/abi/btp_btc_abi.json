@@ -1,0 +1,307 @@
+[
+  {
+    "inputs": [],
+    "name": "name",
+    "outputs": [
+      {
+        "type": "str"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [
+      {
+        "type": "str"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "Address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_to",
+        "type": "Address"
+      },
+      {
+        "name": "_value",
+        "type": "int"
+      },
+      {
+        "default": null,
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "indexed": "0x1",
+        "name": "_from",
+        "type": "Address"
+      },
+      {
+        "indexed": "0x1",
+        "name": "_to",
+        "type": "Address"
+      },
+      {
+        "indexed": "0x1",
+        "name": "_value",
+        "type": "int"
+      },
+      {
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "Transfer",
+    "type": "eventlog"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_amount",
+        "type": "int"
+      }
+    ],
+    "name": "burn",
+    "outputs": [],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "Address"
+      },
+      {
+        "name": "spender",
+        "type": "Address"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "type": "int"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_to",
+        "type": "Address"
+      },
+      {
+        "name": "_amount",
+        "type": "int"
+      }
+    ],
+    "name": "mint",
+    "outputs": [],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "Address"
+      },
+      {
+        "name": "amount",
+        "type": "int"
+      }
+    ],
+    "name": "approve",
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_from",
+        "type": "Address"
+      },
+      {
+        "name": "_to",
+        "type": "Address"
+      },
+      {
+        "name": "_value",
+        "type": "int"
+      },
+      {
+        "default": null,
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "Address"
+      },
+      {
+        "name": "addedValue",
+        "type": "int"
+      }
+    ],
+    "name": "increaseAllowance",
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "Address"
+      },
+      {
+        "name": "subtractedValue",
+        "type": "int"
+      }
+    ],
+    "name": "decreaseAllowance",
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_addr",
+        "type": "Address"
+      }
+    ],
+    "name": "addOwner",
+    "outputs": [],
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_addr",
+        "type": "Address"
+      }
+    ],
+    "name": "removeOwner",
+    "outputs": [],
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOwners",
+    "outputs": [
+      {
+        "type": "list"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_addr",
+        "type": "Address"
+      }
+    ],
+    "name": "isOwner",
+    "outputs": [
+      {
+        "type": "bool"
+      }
+    ],
+    "readonly": "0x1",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "indexed": "0x1",
+        "name": "owner",
+        "type": "Address"
+      },
+      {
+        "indexed": "0x1",
+        "name": "spender",
+        "type": "Address"
+      },
+      {
+        "name": "value",
+        "type": "int"
+      }
+    ],
+    "name": "Approval",
+    "type": "eventlog"
+  }
+]

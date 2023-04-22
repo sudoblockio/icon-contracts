@@ -7,6 +7,7 @@ from icon_contracts.core.classifier import contract_classifier
 from icon_contracts.core.irc_2 import IRC2_METHODS
 
 VALID_IRC2_CONTRACTS = [
+    ("btp_btc_abi.json", True),
     ("balanced_abi.json", True),
     ("act_abi.json", True),
     ("chihua_abi.json", True),
