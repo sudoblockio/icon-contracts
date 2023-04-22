@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import requests
 
@@ -6,21 +7,24 @@ from icon_contracts.config import settings
 from icon_contracts.log import logger
 
 
-def post_rpc(payload: dict, endpoint: str = None, backup_endpoint: str = None):
-    if endpoint is None:
-        endpoint = settings.ICON_NODE_URL
+class JsonRpcException(Exception):
+    def __init__(self, payload: dict, error: dict):
+        self.message = (
+            f"Error calling method=`{payload['method']}` with "
+            f"params=`{payload['params']}` \n"
+            f"Response Error={error}"
+        )
+        super().__init__(self.message)
 
-    r = requests.post(endpoint, data=json.dumps(payload))
 
-    if backup_endpoint is None:
-        backup_endpoint = settings.BACKUP_ICON_NODE_URL
+def post_rpc(payload: dict) -> Optional[dict]:
+    r = requests.post(settings.ICON_NODE_URL, data=json.dumps(payload))
 
     if r.status_code != 200:
         logger.info(f"Error {r.status_code} with payload {payload}")
-        r = requests.post(backup_endpoint, data=json.dumps(payload))
+        r = requests.post(settings.BACKUP_ICON_NODE_URL, data=json.dumps(payload))
         if r.status_code != 200:
             logger.info(f"Error {r.status_code} with payload {payload} to backup")
-            return None
         return r
 
     return r
@@ -137,7 +141,20 @@ def getTrace(tx_hash: str):
             "txHash": tx_hash,
         },
     }
-    return post_rpc(payload, settings.ICON_NODE_URL + "d", settings.BACKUP_ICON_NODE_URL + "d")
+    r = requests.post(settings.ICON_NODE_URL + "d", data=json.dumps(payload))
+    if r.status_code != 200:
+        r = requests.post(settings.BACKUP_ICON_NODE_URL + "d", data=json.dumps(payload))
+    return r
+
+
+def getTransactionByHash(hash: str):
+    payload = {
+        "id": 1001,
+        "jsonrpc": "2.0",
+        "method": "icx_getTransactionByHash",
+        "params": {"txHash": hash},
+    }
+    return post_rpc(payload)
 
 
 # if __name__ == "__main__":

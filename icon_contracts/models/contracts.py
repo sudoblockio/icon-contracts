@@ -12,7 +12,12 @@ from icon_contracts.core import (
     contract_classifier,
 )
 from icon_contracts.log import logger
-from icon_contracts.utils.rpc import icx_call, icx_getScoreApi
+from icon_contracts.utils.rpc import (
+    getScoreStatus,
+    getTransactionByHash,
+    icx_call,
+    icx_getScoreApi,
+)
 
 
 class Contract(SQLModel, table=True):
@@ -79,6 +84,16 @@ class Contract(SQLModel, table=True):
         except Exception:
             logger.info(f"Error getting name from contract {self.address}")
 
+        try:
+            self.symbol = icx_call(self.address, {"method": "symbol"}).json()["result"]
+        except Exception:
+            logger.info(f"Error getting symbol from contract {self.address}")
+
+        try:
+            self.decimals = icx_call(self.address, {"method": "decimals"}).json()["result"]
+        except Exception:
+            logger.info(f"Error getting decimals from contract {self.address}")
+
         # IRC 2
         if contract_classifier(self.abi, IRC2_METHODS):
             self.token_standard = "irc2"
@@ -97,3 +112,38 @@ class Contract(SQLModel, table=True):
             self.token_standard = "irc31"
             self.is_token = True
             self.is_nft = True
+
+        r = getScoreStatus(address=self.address)
+        if r.status_code == 200:
+            score_status = r.json()["result"]
+
+            try:
+                if "current" in score_status:
+                    # The cx0 address only has these three values
+                    self.contract_type = score_status["current"]["type"]
+                    self.status = score_status["current"]["status"].capitalize()
+                    self.code_hash = score_status["current"]["codeHash"]
+                    # Most others have these
+                    self.owner_address = score_status["owner"]
+                    self.audit_tx_hash = score_status["current"]["auditTxHash"]
+                    self.deploy_tx_hash = score_status["current"]["deployTxHash"]
+                else:
+                    logger.info(f"score status not available in {self.address}")
+            except (IndexError, KeyError) as e:
+                logger.info(f"Error getting status - {e} \naddress={self.address}")
+
+        if self.creation_hash is not None:
+            # Creation hash does not come from RPC, rather stream processing and can include
+            # an earlier date than the RPC.
+            hash = self.creation_hash
+        else:
+            # Sometimes stream processing doesn't have data so as a back up we use RPC
+            hash = self.deploy_tx_hash
+
+        r = getTransactionByHash(hash)
+        if r.status_code != 200:
+            logger.info(f"Invalid scoreStatus response for address={self.address}")
+        else:
+            tx_result = r.json()["result"]
+            self.created_timestamp = int(tx_result["timestamp"], 0)
+            self.created_block = int(tx_result["blockHeight"], 0)

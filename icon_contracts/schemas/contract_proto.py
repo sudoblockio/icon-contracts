@@ -5,7 +5,6 @@ from icon_contracts.schemas.contract_processed_pb2 import ContractProcessed
 def contract_to_proto(
     contract_db: Contract,
     contract_updated_block: int,
-    contract_updated_hash: str,
     is_creation: bool,
     contract_proto: ContractProcessed = None,
 ):
@@ -36,6 +35,9 @@ def contract_to_proto(
     contract_proto.is_token = contract_db.is_token
 
     # Tx related
+    if contract_updated_block is not None:
+        contract_proto.contract_updated_block = contract_updated_block
+
     contract_proto.contract_updated_block = contract_updated_block
     # contract_proto.contract_updated_hash = contract_updated_hash
     contract_proto.is_creation = is_creation

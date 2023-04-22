@@ -19,8 +19,7 @@ from icon_contracts.schemas.block_etl_pb2 import LogETL  # noqa
 from icon_contracts.schemas.block_etl_pb2 import TransactionETL  # noqa
 from icon_contracts.schemas.contract_proto import contract_to_proto
 from icon_contracts.utils.api import get_first_tx
-from icon_contracts.utils.contract_content import (
-    get_contract_name,
+from icon_contracts.utils.contract_content import (  # get_contract_name,
     get_s3_client,
     github_release_to_dir,
     upload_to_s3,
@@ -108,16 +107,16 @@ class TransactionsWorker(Worker):
             logger.info(f"Creating new contract address = {address} at block = {self.block.number}")
             contract = Contract(
                 address=address,
-                name=get_contract_name(address),
                 owner_address=self.transaction.from_address,
                 last_updated_block=self.block.number,
-                # last_updated_timestamp=timestamp, # Out on purpose for subsequent logic
                 created_block=self.block.number,
                 created_timestamp=self.transaction.timestamp,
                 creation_hash=self.transaction.hash,
             )
-            self.session.merge(contract)
-            self.session.commit()
+            contract.extract_contract_details()
+
+            # self.session.merge(contract)
+            # self.session.commit()
 
         if self.data["contentType"] == "application/zip":
             contract.contract_type = "python"
@@ -144,7 +143,6 @@ class TransactionsWorker(Worker):
             # Upload to s3
             self.upload_contract_source(contract, content)
 
-            contract.name = get_contract_name(contract.address)
             contract.last_updated_block = self.block.number
             contract.last_updated_timestamp = self.transaction.timestamp
 
@@ -180,7 +178,6 @@ class TransactionsWorker(Worker):
             contract_to_proto(
                 contract,
                 contract_updated_block=self.block.number,
-                contract_updated_hash=self.transaction.hash,
                 is_creation=True,
             ),
         )
@@ -233,12 +230,9 @@ class TransactionsWorker(Worker):
             metrics.contracts_created_python.set(self.contracts_created_python)
             contract = Contract(
                 address=address,
-                name=get_contract_name(address),
                 status=status,
-                owner_address=self.transaction.from_address,
-                # We deal with update dates based on submission due to 2.0 dropping audit
-                last_updated_block=0,
             )
+            contract.extract_contract_details()
 
         # Out of order processes
         # Checking last_updated_timestamp case for when we see a contract approval
@@ -455,48 +449,17 @@ class TransactionsWorker(Worker):
          extracting out the details and then if the contract is not in the DB,
          produces a msg for that contract.
         """
-        r = getScoreStatus(address=address)
-        if r.status_code != 200:
-            logger.info(f"Invalid scoreStatus response for address={address}")
-            return
-        score_status = r.json()["result"]
 
         contract = self.session.get(Contract, address)
-
-        put_in_db = False
         if contract is None:
-            put_in_db = True
-            try:
-                contract = Contract(
-                    address=address,
-                    audit_tx_hash=score_status["current"]["auditTxHash"],
-                    code_hash=score_status["current"]["codeHash"],
-                    deploy_tx_hash=score_status["current"]["deployTxHash"],
-                    contract_type=score_status["current"]["type"],
-                    status=score_status["current"]["status"].capitalize(),
-                    owner_address=score_status["owner"],
-                )
-            except KeyError:
-                return
-            contract.extract_contract_details()
+            contract = Contract(address=address)
 
-        if contract.audit_tx_hash is None:
-            if "current" in score_status:
-                put_in_db = True
-                contract.audit_tx_hash = score_status["current"]["auditTxHash"]
-                contract.code_hash = score_status["current"]["codeHash"]
-                contract.deploy_tx_hash = score_status["current"]["deployTxHash"]
-                contract.contract_type = score_status["current"]["type"]
-                contract.status = score_status["current"]["status"].capitalize()
-                contract.owner_address = score_status["owner"]
-            else:
-                logger.info(f"score status not available in {address}")
+        # This method updates contract static details
+        contract.extract_contract_details()
 
         # Adding other info for initial_block might screw up non-internal contracts
         if contract.last_updated_timestamp is None:
             contract.last_updated_timestamp = get_first_tx(address=contract.address)
-            self.session.merge(contract)
-            self.session.commit()
 
         # We then need to produce this to proto
         self.produce_protobuf(
@@ -506,16 +469,12 @@ class TransactionsWorker(Worker):
             contract_to_proto(
                 contract_db=contract,
                 contract_updated_block=self.block.number,
-                contract_updated_hash=self.transaction.hash,
                 is_creation=True,
             ),
         )
 
-        # Skip putting in DB if we have it there already.
-        # TODO: This will might cause bugs on initial sync.
-        if put_in_db:
-            self.session.merge(contract)
-            self.session.commit()
+        self.session.merge(contract)
+        self.session.commit()
 
     def process_transaction(self):
         # Pass on any invalid Tx in this service
