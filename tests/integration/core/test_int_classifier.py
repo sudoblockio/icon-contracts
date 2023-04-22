@@ -2,7 +2,18 @@ import pytest
 
 from icon_contracts.models.contracts import Contract
 
-CONTRACT_CLASSIFICATIONS = ["cxb0b6f777fba13d62961ad8ce11be7ef6c4b2bcc6"]
+
+def test_extract_contract_details_creation():
+    contract = Contract(address="cx3be2043b46ef12f8653dfda01225253b708f1cd9")
+    contract.creation_hash = "0x780589bd21ea5af76b6a46a08cc8acdf63bae2af0aa6daa0af839f6ab3aa4e6b"
+    contract.extract_contract_details()
+
+    assert contract.created_block
+
+
+CONTRACT_CLASSIFICATIONS = [
+    "cxb0b6f777fba13d62961ad8ce11be7ef6c4b2bcc6",
+]
 
 
 @pytest.mark.parametrize("address", CONTRACT_CLASSIFICATIONS)
@@ -11,12 +22,13 @@ def test_classify_contract_contract(address):
     contract = Contract()
     contract.address = address
     contract.extract_contract_details()
-    assert contract.contract_type is None
+    assert contract.contract_type
 
 
 TOKEN_CLASSIFICATIONS_IRC2 = [
     ("cxf61cd5a45dc9f91c15aa65831a30a90d59a09619", "BALN"),
     ("cx0bb718a35e7fc8faffe6faf82b32f6f7cb5e7c81", "CHIU"),
+    ("cx82e9075445764ef32f772d11f5cb08dae71d463b", "ITD"),
 ]
 
 
@@ -27,6 +39,7 @@ def test_classify_contract_irc2(address, symbol):
     contract.extract_contract_details()
     assert contract.symbol == symbol
     assert contract.token_standard == "irc2"
+    assert contract.is_token
 
 
 IRC3_CONTRACTS = [
