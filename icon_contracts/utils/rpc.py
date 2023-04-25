@@ -1,7 +1,7 @@
 import json
-from typing import Optional
 
 import requests
+from requests import Response
 
 from icon_contracts.config import settings
 from icon_contracts.log import logger
@@ -17,17 +17,27 @@ class JsonRpcException(Exception):
         super().__init__(self.message)
 
 
-def post_rpc(payload: dict) -> Optional[dict]:
+def post_rpc(payload: dict) -> Response:
     r = requests.post(settings.ICON_NODE_URL, data=json.dumps(payload))
 
     if r.status_code != 200:
-        logger.info(f"Error {r.status_code} with payload {payload}")
+        logger.debug(f"Error {r.status_code} with payload {payload}")
         r = requests.post(settings.BACKUP_ICON_NODE_URL, data=json.dumps(payload))
         if r.status_code != 200:
-            logger.info(f"Error {r.status_code} with payload {payload} to backup")
+            logger.debug(f"Error {r.status_code} with payload {payload} to backup")
         return r
 
     return r
+
+
+def make_call(r: Response):
+    if r.status_code == 200:
+        output = r.json()
+        if ["result"] in output:
+            return output["result"]
+        return None
+    else:
+        return None
 
 
 def icx_getTransactionResult(txHash: str):
