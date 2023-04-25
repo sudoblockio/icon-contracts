@@ -17,6 +17,7 @@ from icon_contracts.utils.rpc import (
     getTransactionByHash,
     icx_call,
     icx_getScoreApi,
+    make_call,
 )
 
 
@@ -76,29 +77,35 @@ class Contract(SQLModel, table=True):
         if response.status_code == 200:
             self.abi = response.json()["result"]
         else:
-            logger.info(f"Unknown abi for address {self.address}")
+            logger.debug(f"Unknown abi for address {self.address}")
             return
 
         try:
             self.name = icx_call(self.address, {"method": "name"}).json()["result"]
         except Exception:
-            logger.info(f"Error getting name from contract {self.address}")
+            logger.debug(f"Error getting name from contract {self.address}")
 
         try:
             self.symbol = icx_call(self.address, {"method": "symbol"}).json()["result"]
         except Exception:
-            logger.info(f"Error getting symbol from contract {self.address}")
+            logger.debug(f"Error getting symbol from contract {self.address}")
 
         try:
             self.decimals = icx_call(self.address, {"method": "decimals"}).json()["result"]
         except Exception:
-            logger.info(f"Error getting decimals from contract {self.address}")
+            logger.debug(f"Error getting decimals from contract {self.address}")
 
         # IRC 2
         if contract_classifier(self.abi, IRC2_METHODS):
             self.token_standard = "irc2"
-            self.symbol = icx_call(self.address, {"method": "symbol"}).json()["result"]
-            self.decimals = icx_call(self.address, {"method": "decimals"}).json()["result"]
+            try:
+                self.symbol = icx_call(self.address, {"method": "symbol"})
+            except Exception:
+                logger.info(f"symbol missing in classified contract {self.address}")
+            try:
+                self.decimals = make_call(icx_call(self.address, {"method": "decimals"}))
+            except Exception:
+                logger.info(f"decimals missing in classified contract {self.address}")
             self.is_token = True
 
         # IRC 3
@@ -142,7 +149,7 @@ class Contract(SQLModel, table=True):
 
         r = getTransactionByHash(hash)
         if r.status_code != 200:
-            logger.info(f"Invalid scoreStatus response for address={self.address}")
+            logger.debug(f"Invalid scoreStatus response for address={self.address}")
         else:
             tx_result = r.json()["result"]
             self.created_timestamp = int(tx_result["timestamp"], 0)
