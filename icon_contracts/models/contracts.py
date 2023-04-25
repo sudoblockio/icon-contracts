@@ -99,7 +99,7 @@ class Contract(SQLModel, table=True):
         if contract_classifier(self.abi, IRC2_METHODS):
             self.token_standard = "irc2"
             try:
-                self.symbol = icx_call(self.address, {"method": "symbol"})
+                self.symbol = make_call(icx_call(self.address, {"method": "symbol"}))
             except Exception:
                 logger.info(f"symbol missing in classified contract {self.address}")
             try:
