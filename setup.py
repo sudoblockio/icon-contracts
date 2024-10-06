@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="vaults-etl",
-    version="0.2.0",
+    version="0.2.1",
     author="Geometry Labs, Inc.",
     license="CLOSED",
     python_requires=">=3.6",

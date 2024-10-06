@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/sudoblockio/icon-contracts/compare/v0.2.0...v0.2.1) (2024-10-06)
+
+
+### Bug Fixes
+
+* add tags on router ([902dbe0](https://github.com/sudoblockio/icon-contracts/commit/902dbe06f0799423a4fae4e29c370e9b476b3a71))
+
 ## [0.2.0](https://github.com/sudoblockio/icon-contracts/compare/v0.1.2...v0.2.0) (2023-04-25)
 
 
