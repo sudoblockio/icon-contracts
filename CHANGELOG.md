@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/sudoblockio/icon-contracts/compare/v0.2.1...v0.2.2) (2024-10-07)
+
+
+### Bug Fixes
+
+* makefile compose cmds ([b0389e6](https://github.com/sudoblockio/icon-contracts/commit/b0389e65e13165c143adf3be4e641134b29ade3e))
+* snub get first tx test [#11](https://github.com/sudoblockio/icon-contracts/issues/11) ([4220fb3](https://github.com/sudoblockio/icon-contracts/commit/4220fb367cf99bb25f8ca23cb49fee00eb3c6c4c))
+
 ## [0.2.1](https://github.com/sudoblockio/icon-contracts/compare/v0.2.0...v0.2.1) (2024-10-06)
 
 
