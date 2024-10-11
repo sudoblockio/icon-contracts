@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/sudoblockio/icon-contracts/compare/v0.2.2...v0.2.3) (2024-10-11)
+
+
+### Bug Fixes
+
+* capitalise router tags ([141493b](https://github.com/sudoblockio/icon-contracts/commit/141493b394078591839c93e1e252caab74631c05))
+
 ## [0.2.2](https://github.com/sudoblockio/icon-contracts/compare/v0.2.1...v0.2.2) (2024-10-07)
 
 
