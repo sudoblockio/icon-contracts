@@ -24,6 +24,7 @@ Contract verification is the process from which additional metadata about a cont
 - Berlin: `cx4a574176f82852487b547126b7a59874f5599acd`
 - Lisbon: `cx59fd09b8fd87ad82961c29c4ff5e44773f629330`
 
+
 #### Preparing Java Source Code
 
 Java source code needs to be prepared carefully before being submitted to the chain. Each contract verification transaction includes a zipped copy of the source code which is then built off-chain and compared to the binary on-chain. This requires that all files needed to build the contract exist with the uploaded contract and hence need to be zipped up appropriately.
