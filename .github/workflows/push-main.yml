@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -33,7 +33,7 @@ jobs:
           fail_ci_if_error: true
 
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: test
     outputs:
       tag: ${{ steps.source.outputs.TAG }}
@@ -77,7 +77,7 @@ jobs:
           tags: sudoblock/icon-contracts-worker:latest, sudoblock/icon-contracts-worker:${{ steps.source.outputs.TAG }}
 
   push_refs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: docker
     strategy:
       max-parallel: 1
