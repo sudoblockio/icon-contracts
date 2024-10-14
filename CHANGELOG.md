@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/sudoblockio/icon-contracts/compare/v0.2.3...v0.2.4) (2024-10-14)
+
+
+### Bug Fixes
+
+* ci runner image version ([b7ecb02](https://github.com/sudoblockio/icon-contracts/commit/b7ecb02b9e8257ed0f8fda1fedade98ae758327b))
+
 ## [0.2.3](https://github.com/sudoblockio/icon-contracts/compare/v0.2.2...v0.2.3) (2024-10-11)
 
 
