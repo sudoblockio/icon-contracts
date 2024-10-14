@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/sudoblockio/icon-contracts/compare/v0.2.4...v0.2.5) (2024-10-14)
+
+
+### Bug Fixes
+
+* ci release ([661a3e3](https://github.com/sudoblockio/icon-contracts/commit/661a3e35db9f8fbdbf56b924b66466944112a872))
+
 ## [0.2.4](https://github.com/sudoblockio/icon-contracts/compare/v0.2.3...v0.2.4) (2024-10-14)
 
 
