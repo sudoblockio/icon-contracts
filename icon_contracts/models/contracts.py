@@ -25,40 +25,44 @@ class Contract(SQLModel, table=True):
     address: str = Field(primary_key=True)
 
     name: Optional[str] = Field(None, index=False)
-    symbol: str = Field(None, index=False)
-    decimals: str = Field(None, index=False)
+    symbol: Optional[str] = Field(None, index=False)
+    decimals: Optional[str] = Field(None, index=False)
 
-    contract_type: str = Field(None, index=True, description="One of python / java")
-    token_standard: str = Field(None, index=True, description="One of Contract, IRC2")
+    contract_type: Optional[str] = Field(None, index=True, description="One of python / java")
+    token_standard: Optional[str] = Field(None, index=True, description="One of Contract, IRC2")
 
     email: Optional[str] = Field(None, index=False)
     website: Optional[str] = Field(None, index=False)
 
     last_updated_block: Optional[int] = Field(None, index=True)
-    last_updated_timestamp: Optional[int] = Field(None, sa_column=Column(BIGINT), index=True)
+    last_updated_timestamp: Optional[int] = Field(
+        None, sa_column=Column(BIGINT, index=True)
+        )
     created_block: Optional[int] = Field(None, index=True)
-    created_timestamp: Optional[int] = Field(None, sa_column=Column(BIGINT), index=True)
+    created_timestamp: Optional[int] = Field(
+        None, sa_column=Column(BIGINT, index=True)
+        )
     creation_hash: Optional[str] = Field(None, index=False)
 
     owner_address: Optional[str] = Field(None, index=False)
 
     current_version: Optional[str] = Field(None, index=False)
 
-    abi: List[dict] = Field(None, index=False, sa_column=Column(JSON))
+    abi: List[dict] = Field(None, sa_column=Column(JSON, index=False))
 
-    source_code_link: str = Field(None, index=False)
-    verified_source_code_link: str = Field(None, index=False)
-    verified: bool = Field(False, index=True)
-    revision_number: int = Field(
+    source_code_link: Optional[str] = Field(None, index=False)
+    verified_source_code_link: Optional[str] = Field(None, index=False)
+    verified: Optional[bool] = Field(False, index=True)
+    revision_number: Optional[int] = Field(
         -1,
         index=False,
         description="Out of order ID for zipped up source code in s3 "
         "/bucket/[address]_[revision_number].zip",
     )
 
-    audit_tx_hash: str = Field(None, index=False)
-    code_hash: str = Field(None, index=False)
-    deploy_tx_hash: str = Field(None, index=False)
+    audit_tx_hash: Optional[str] = Field(None, index=False)
+    code_hash: Optional[str] = Field(None, index=False)
+    deploy_tx_hash: Optional[str] = Field(None, index=False)
 
     status: Optional[str] = Field(
         None, index=True, description="Field to inform audit status of 1.0 contracts."

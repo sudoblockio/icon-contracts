@@ -2,5 +2,5 @@ pytest
 pytest-mock
 pytest-cov
 
-docker-compose
-grpcio-tools==1.40.0
+# docker-compose
+grpcio-tools
