@@ -260,7 +260,7 @@ class TransactionsWorker(Worker):
                 contract_to_proto(
                     contract,
                     contract_updated_block=self.block.number,
-                    contract_updated_hash=self.transaction.hash,
+                    # contract_updated_hash=self.transaction.hash,
                     is_creation=False,
                 ),
             )
