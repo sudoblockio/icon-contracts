@@ -5,7 +5,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     NAME: str = "contracts"
-    VERSION: str = "v0.2.5"  # x-release-please-version
+    VERSION: str = "v0.2.6"  # x-release-please-version
     NETWORK_NAME: str = "mainnet"
 
     # Ports
