@@ -238,8 +238,9 @@ class TransactionsWorker(Worker):
         # Checking last_updated_timestamp case for when we see a contract approval
         # event before we see the contract submission
         if (
+            contract.last_updated_timestamp is None or
+            contract.last_updated_block is None or
             self.block.number > contract.last_updated_block
-            or contract.last_updated_timestamp is None
         ):
             logger.info(
                 f"Updating contract status from approval for address = {address} at block = {self.block.number}"
@@ -260,7 +261,7 @@ class TransactionsWorker(Worker):
                 contract_to_proto(
                     contract,
                     contract_updated_block=self.block.number,
-                    contract_updated_hash=self.transaction.hash,
+                    # contract_updated_hash=self.transaction.hash,
                     is_creation=False,
                 ),
             )
