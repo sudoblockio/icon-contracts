@@ -9,6 +9,7 @@ from confluent_kafka.admin import AdminClient
 # from confluent_kafka.serialization import StringSerializer
 from loguru import logger
 from pydantic import BaseModel
+from sqlalchemy import text
 
 from icon_contracts.config import settings
 
@@ -25,7 +26,7 @@ def get_current_offset(session):
     output = {}
     while True:
         logger.info(f"Getting kafka job with job_id = {settings.JOB_ID}")
-        sql = f"select * from kafka_jobs WHERE job_id='{settings.JOB_ID}';"
+        sql = text(f"select * from kafka_jobs WHERE job_id='{settings.JOB_ID}';")
         result = session.execute(sql).fetchall()
         session.commit()
 
