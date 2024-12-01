@@ -26,7 +26,7 @@ async def get_contracts(
 ) -> List[Contract]:
     """Return list of contracts"""
     query = select(Contract).offset(skip).limit(limit)
-    query_count = select([func.count(Contract.address)])
+    query_count = select(func.count(Contract.address))
 
     if contract_type:
         query = query.where(Contract.contract_type == contract_type)

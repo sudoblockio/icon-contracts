@@ -6,12 +6,12 @@ requests==2.26.0
 loguru==0.5.3
 prometheus_client==0.11.0
 
-grpcio==1.40.0
+grpcio
 
 # Temporary breaking change
-protobuf==3.20.1
+protobuf==3.20.*
 confluent_kafka
 psycopg2-binary
-alembic==1.7.1
-asyncpg==0.24.0
-sqlmodel==0.0.4
+alembic
+asyncpg
+sqlmodel

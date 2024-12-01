@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -38,9 +38,9 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "string"
 
     # ICON Nodes
-    ICON_NODE_URL = "https://api.icon.community/api/v3"
+    ICON_NODE_URL: str = "https://api.icon.community/api/v3"
     # ICON_NODE_URL: str = "https://berlin.net.solidwallet.io/api/v3"
-    BACKUP_ICON_NODE_URL = "https://ctz.solidwallet.io/api/v3"
+    BACKUP_ICON_NODE_URL:str = "https://ctz.solidwallet.io/api/v3"
 
     COMMUNITY_API_ENDPOINT: str = "https://tracker.icon.community"
 
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     # KAFKA_GROUP_ID: str = "contracts"
     CONSUMER_IS_TAIL: bool = False
-    JOB_ID: str = None
+    JOB_ID: str | None = None
     CONSUMER_GROUP: str = "contracts"
     # Change this to "earliest" + CONSUMER_GROUP to trigger a manual backfill
     CONSUMER_AUTO_OFFSET_RESET: str = "latest"
@@ -68,9 +68,9 @@ class Settings(BaseSettings):
     POSTGRES_DATABASE: str = "postgres"
 
     # Contract S3 Upload
-    CONTRACTS_S3_AWS_ACCESS_KEY_ID: str = None
-    CONTRACTS_S3_AWS_SECRET_ACCESS_KEY: str = None
-    CONTRACTS_S3_BUCKET: str = None
+    CONTRACTS_S3_AWS_ACCESS_KEY_ID: str | None = None
+    CONTRACTS_S3_AWS_SECRET_ACCESS_KEY: str | None = None
+    CONTRACTS_S3_BUCKET: str | None = None
 
     # Endpoints
     MAX_PAGE_SIZE: int = 100
@@ -98,9 +98,10 @@ class Settings(BaseSettings):
     governance_address: str = "cx0000000000000000000000000000000000000000"
     one_address: str = "cx0000000000000000000000000000000000000001"
 
-    class Config:
-        case_sensitive = False
-
+ 
+    model_config = SettingsConfigDict(
+        case_sensitive=False,
+    )
 
 if os.environ.get("ENV_FILE", False):
     settings = Settings(_env_file=os.environ.get("ENV_FILE"))

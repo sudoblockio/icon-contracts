@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import text
 
 from icon_contracts.config import settings
 from icon_contracts.workers.kafka import get_current_offset
@@ -10,17 +11,17 @@ PARTITION_DICT_FIXTURE = {("transactions", 0): 10000}
 def backfill_job(db):
     def f(job_id):
         with db as session:
-            sql = "DROP TABLE IF EXISTS kafka_jobs;"
+            sql = text("DROP TABLE IF EXISTS kafka_jobs;")
             session.execute(sql)
             session.commit()
 
-            sql = "CREATE TABLE IF NOT EXISTS kafka_jobs (job_id varchar, worker_group varchar, topic varchar, partition bigint, stop_offset bigint, PRIMARY KEY (job_id, worker_group, topic, partition));"
+            sql = text("CREATE TABLE IF NOT EXISTS kafka_jobs (job_id varchar, worker_group varchar, topic varchar, partition bigint, stop_offset bigint, PRIMARY KEY (job_id, worker_group, topic, partition));")
             session.execute(sql)
             session.commit()
 
             num_msgs = 1000
             for i in range(0, 12):
-                sql = (
+                sql = text(
                     f"INSERT INTO kafka_jobs (job_id, worker_group, topic, partition, stop_offset) VALUES "
                     f"('{job_id}','{settings.CONSUMER_GROUP}-{job_id}',"
                     f"'{settings.CONSUMER_TOPIC_BLOCKS}','{i}','{num_msgs}');"
@@ -33,7 +34,7 @@ def backfill_job(db):
 
 
 def test_get_current_offset(db, backfill_job):
-    settings.JOB_ID = "test6"
+    settings.JOB_ID = text("test6")
     backfill_job(settings.JOB_ID)
 
     with db as session:
