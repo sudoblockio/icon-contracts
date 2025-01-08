@@ -1,6 +1,7 @@
 pytest
 pytest-mock
 pytest-cov
-
+httpx<0.28.0
+pytest-httpx
 docker-compose
 grpcio-tools==1.40.0
