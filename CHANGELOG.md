@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.6](https://github.com/sb-icon/icon-contracts/compare/v0.2.5...v0.2.6) (2025-10-03)
+
+
+### Bug Fixes
+
+* dependencies ([f34fc51](https://github.com/sb-icon/icon-contracts/commit/f34fc518225db929a6550fa45b0362268f3b4de8))
+* logic for out of order processing ([d2e0f6b](https://github.com/sb-icon/icon-contracts/commit/d2e0f6be46d1f17517a26679d13f7e238ab14ddc))
+* rm missing value in proto ([cb66e1b](https://github.com/sb-icon/icon-contracts/commit/cb66e1b325f7474ab825f20d8c93a5804f85ed03))
+
 ## [0.2.5](https://github.com/sb-icon/icon-contracts/compare/v0.2.4...v0.2.5) (2024-10-14)
 
 
