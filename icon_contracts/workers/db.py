@@ -1,4 +1,6 @@
 from loguru import logger
+import sys
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import create_engine
 
@@ -20,3 +22,14 @@ logger.info(
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 session_factory = sessionmaker(bind=engine)
+
+def get_db_session():
+    try:
+        session = session_factory()
+        return session
+    except OperationalError as e:
+        logger.error(f"Error connecting to the database: {e}")
+        sys.exit(1)
+
+# Use the function to get a session
+session = get_db_session()

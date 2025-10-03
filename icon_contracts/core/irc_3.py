@@ -57,7 +57,10 @@ IRC3_METHODS = [
     {
         "name": "transfer",
         "type": "function",
-        "inputs": [{"name": "_to", "type": "Address"}, {"name": "_tokenId", "type": "int"}],
+        "inputs": [
+            {"name": "_to", "type": "Address"},
+            {"name": "_tokenId", "type": "int"}
+        ],
         "outputs": [],
     },
     {

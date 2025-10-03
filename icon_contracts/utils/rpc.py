@@ -33,7 +33,7 @@ def post_rpc(payload: dict) -> Response:
 def make_call(r: Response):
     if r.status_code == 200:
         output = r.json()
-        if ["result"] in output:
+        if "result" in output:
             return output["result"]
         return None
     else:

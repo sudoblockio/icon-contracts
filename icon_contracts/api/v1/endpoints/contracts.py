@@ -12,12 +12,15 @@ from icon_contracts.models.social_media import SocialMedia
 router = APIRouter()
 
 
+SORT_PARAMS = ['name']
+
 @router.get("/contracts")
 async def get_contracts(
     response: Response,
     session: AsyncSession = Depends(get_session),
     skip: int = Query(0),
     limit: int = Query(100, gt=0, lt=101),
+    sort: str = Query(None),
     contract_type: str = Query(None),
     is_token: bool = Query(None),
     is_nft: bool = Query(None),
@@ -43,6 +46,23 @@ async def get_contracts(
     if status:
         query = query.where(Contract.status == status)
         query_count = query_count.where(Contract.status == status)
+    if sort:
+        sort_first_char = sort[0:1]
+        ascending = False
+        if sort_first_char == '-':
+            sort_param = sort[1:]
+            ascending = True
+        elif sort_first_char == '+':
+            sort_param = sort[1:]
+        else:
+            sort_param = sort
+
+        # TODO: Implement sort order
+        if ascending:
+            query = query.order_by(sort_param)
+        else:
+            query = query.order_by(sort_param)
+
 
     result_count = await session.execute(query_count)
     result = await session.execute(query)

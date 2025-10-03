@@ -5,5 +5,8 @@ from icon_contracts.config import settings
 
 
 def test_api_get_contracts(db: Session, client: TestClient):
-    response = client.get(f"{settings.REST_PREFIX}/contracts").json()
+    # response = client.get(f"{settings.REST_PREFIX}/contracts").json()
+    # assert isinstance(response, list)
+
+    response = client.get(f"{settings.REST_PREFIX}/contracts?sort=status").json()
     assert isinstance(response, list)

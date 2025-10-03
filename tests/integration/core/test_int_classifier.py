@@ -4,8 +4,8 @@ from icon_contracts.models.contracts import Contract
 
 
 def test_extract_contract_details_creation():
-    contract = Contract(address="cx3be2043b46ef12f8653dfda01225253b708f1cd9")
-    contract.creation_hash = "0x780589bd21ea5af76b6a46a08cc8acdf63bae2af0aa6daa0af839f6ab3aa4e6b"
+    contract = Contract(address="cx288d13e1b63563459a2ac6179f237711f6851cb5")
+    # contract.creation_hash = "0x780589bd21ea5af76b6a46a08cc8acdf63bae2af0aa6daa0af839f6ab3aa4e6b"
     contract.extract_contract_details()
 
     assert contract.created_block
@@ -29,6 +29,7 @@ TOKEN_CLASSIFICATIONS_IRC2 = [
     ("cxf61cd5a45dc9f91c15aa65831a30a90d59a09619", "BALN"),
     ("cx0bb718a35e7fc8faffe6faf82b32f6f7cb5e7c81", "CHIU"),
     ("cx82e9075445764ef32f772d11f5cb08dae71d463b", "ITD"),
+    ("cxc2d7b31555b173becec0a258ae1dbd99459aca38", "NMT1"),
 ]
 
 

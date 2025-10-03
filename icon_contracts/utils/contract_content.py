@@ -89,12 +89,12 @@ def upload_to_s3(s3_client: Any, filename: str, key: str, prefix: str = "contrac
     s3_client.upload_file(filename, settings.CONTRACTS_S3_BUCKET, f"{prefix}/" + key)
 
 
-def get_contract_name(address):
-    name_response = icx_call(address, {"method": "name"})
-    if name_response is not None and name_response.status_code == 200:
-        return icx_call(address, {"method": "name"}).json()["result"]
-    else:
-        return ""
+# def get_contract_name(address):
+#     name_response = icx_call(address, {"method": "name"})
+#     if name_response is not None and name_response.status_code == 200:
+#         return icx_call(address, {"method": "name"}).json()["result"]
+#     else:
+#         return ""
 
 
 # TODO: This is viable if we want to keep track of the contracts

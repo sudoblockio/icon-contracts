@@ -1,7 +1,11 @@
+import random
+import string
+
 import pytest
 
 from icon_contracts.config import settings
 from icon_contracts.workers.kafka import get_current_offset
+from icon_contracts.workers.transactions import TransactionsWorker
 
 PARTITION_DICT_FIXTURE = {("transactions", 0): 10000}
 
@@ -105,3 +109,32 @@ def test_get_current_offset(db, backfill_job):
 #     assert len(partitions) == 12
 #
 #     kafka.start()
+
+
+# def test_transactions_worker(db, backfill_job, run_process_wait):
+#     topic_name = "blocks"
+#     cg = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
+#     with db as session:
+#         kafka = TransactionsWorker(
+#             s3_client=None,
+#             session=session,
+#             topic=topic_name,
+#             consumer_group=cg,
+#             auto_offset_reset="earliest",
+#         )
+#         kafka.start()
+#         run_process_wait(kafka.start(), 5)
+
+
+# def test_transactions_worker(db):
+#     topic_name = "blocks"
+#     cg = "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(2))
+#     with db as session:
+#         kafka = TransactionsWorker(
+#             s3_client=None,
+#             session=session,
+#             topic=topic_name,
+#             consumer_group=cg,
+#             auto_offset_reset="earliest",
+#         )
+#         kafka.start()
